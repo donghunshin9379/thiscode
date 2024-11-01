@@ -1,0 +1,13 @@
+package com.example.thiscode.repository;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+public class SpringDataJpaFriendRepositoryTest {
+
+    @Autowired
+    private FriendListRepository friendListRepository;
+
+
+}

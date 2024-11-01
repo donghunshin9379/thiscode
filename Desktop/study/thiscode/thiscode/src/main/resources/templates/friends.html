@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>친구 목록</title>
+    <link th:href="@{../css/friends.css}" rel="stylesheet" />
+</head>
+<body>
+
+<!-- 상단 바 -->
+<div class="navbar">
+    <!-- 왼쪽 탭들 -->
+    <div class="tabs">
+        <div class="tab" id="online-tab">온라인</div>
+        <div class="tab" id="friends-tab">모두</div>
+        <div class="tab" id="pending-tab">대기중</div>
+        <div class="tab" id="blocked-tab">차단목록</div>
+    </div>
+    <!-- 오른쪽 친구추가 버튼 -->
+    <div class="add-friend" id="add-friend-btn" onclick="showAddFriendModal()">친구추가</div>
+</div>
+
+<!-- 친구 추가 모달 (숨겨져 있음) -->
+<div id="add-friend-modal" style="display: none;">
+    <input type="text" id="recipient-username" placeholder="이름(username) 입력">
+    <button id="send-request-btn">친구 요청 보내기</button>
+</div>
+
+<!-- 대기중인 친구 요청 -->
+<div class="pending-section" id="pending-section" style="display: none;">
+    <h2>대기 중 친구 요청</h2>
+
+    <h3>보낸 요청</h3>
+    <ul id="sent-requests"></ul>
+
+    <h3>받은 요청</h3>
+    <ul id="received-requests"></ul>
+</div>
+
+
+<!-- 모든 친구 목록 -->
+<div class="friends-section" id="all-friends-section" style="display: none;">
+    <h2>모든 친구</h2>
+    <input type="text" id="search-input" placeholder="검색하기">
+    <ul id="friends-list"></ul>
+</div>
+
+<!-- 차단 목록 -->
+<div class="blocked-section" id="blocked-section" style="display: none;">
+    <h2>차단 목록</h2>
+    <ul>
+        <li th:each="blocked : ${blockedUsers}">
+            <span th:text="${blocked.username}"></span>
+            <form th:action="@{/friends/unblock}" method="post" style="display:inline;">
+                <input type="hidden" th:value="${blocked.username}" name="username"/>
+                <button type="submit">차단 해제</button>
+            </form>
+        </li>
+    </ul>
+</div>
+
+<!-- 자바스크립트 -->
+<script th:src="@{/js/friends.js}"></script>
+
+</body>
+</html>

@@ -1,0 +1,7 @@
+-- 데이터베이스 생성
+CREATE DATABASE thiscode;
+
+-- 사용자 생성 및 권한 부여
+CREATE USER 'thiscodeUser'@'localhost' IDENTIFIED BY 'manager';
+GRANT ALL PRIVILEGES ON KoreaRecall.* TO 'KoreaRecallUser'@'localhost';
+FLUSH PRIVILEGES;

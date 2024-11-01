@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link th:href="@{../css/login.css}" rel="stylesheet" />
+</head>
+<body>
+<div class="login-container">
+    <h1>Login</h1>
+    <form th:action="@{/auth}" method="POST" >
+        <label for="email">Email</label>
+        <input type="text" id="email" name="username" placeholder="Enter your email" required> <!-- name을 username으로 변경 -->
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+
+        <button type="submit">Login</button>
+    </form>
+
+    <div class="signup-link">
+        <p>계정이 필요한가요? <a href="/signup">가입하기</a></p>
+    </div>
+</div>
+</body>
+</html>

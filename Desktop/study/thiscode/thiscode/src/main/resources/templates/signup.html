@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Sign Up</title>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+<h1>Sign Up</h1>
+<form id="signupForm" th:action="@{/signup}" method="post">
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" placeholder="Email" required />
+    <!-- 중복 메시지를 표시할 요소 -->
+    <div id="email-duplicate-message" style="color: red; display: none;"></div>
+
+    <label for="nickname">Nickname:</label>
+    <input type="text" id="nickname" name="nickname" required="required"/><br>
+
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required="required"/><br>
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required="required"/><br>
+
+    <label for="birthYear">Birth Year:</label>
+    <select id="birthYear" name="birthYear" required="required">
+        <!-- Populate years from current year to 1900 -->
+        <th:block th:each="year : ${#numbers.sequence(1950, 2024)}">
+            <option th:value="${year}" th:text="${year}"></option>
+        </th:block>
+    </select><br>
+
+    <label for="birthMonth">Birth Month:</label>
+    <select id="birthMonth" name="birthMonth" required="required">
+        <option value="1">1월</option>
+        <option value="2">2월</option>
+        <option value="3">3월</option>
+        <option value="4">4월</option>
+        <option value="5">5월</option>
+        <option value="6">6월</option>
+        <option value="7">7월</option>
+        <option value="8">8월</option>
+        <option value="9">9월</option>
+        <option value="10">10월</option>
+        <option value="11">11월</option>
+        <option value="12">12월</option>
+    </select><br>
+
+    <label for="birthDay">Birth Day:</label>
+    <select id="birthDay" name="birthDay" required="required">
+        <!-- Populate days from 1 to 31 -->
+        <th:block th:each="day : ${#numbers.sequence(1, 31)}">
+            <option th:value="${day}" th:text="${day}"></option>
+        </th:block>
+    </select><br>
+
+    <button type="submit">Sign Up</button>
+</form>
+
+<p>이미 계정이 있나요? <a href="/login">로그인</a></p>
+
+<script src="/js/signup.js"></script>
+</body>
+</html>
