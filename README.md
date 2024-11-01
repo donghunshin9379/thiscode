@@ -2,11 +2,11 @@
 
 ## Discord를 *Java/Spring boot*로 구현합니다.
 
-- springframework boot ver'3.3.3'
+- 프레임워크 : 스프링부트 '3.3.3'
 - 패키지 구조 : MVC
 - DB ER 다이어그램
 - ![image](https://github.com/user-attachments/assets/a77af5db-14b7-4650-a214-9971d14c3ea0)
-- 의존성 [Spring Data JPA, jdbc, lombok, Junit, log4j, thymeleaf, Spring Security]
+- 의존성 [Spring Data JPA, jdbc, Junit, log4j, thymeleaf, Spring Security]
 
 **현재 진행상황**
 - 회원가입 / 로그인 (Spring Secutiry + Maria DB)
