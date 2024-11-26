@@ -49,39 +49,12 @@ public class WebSocketService {
         }
     }
 
-//    public void removeSession(WebSocketSession session) {
-//        // 세션에서 유저 정보를 가져옴
-//        Optional<Member> memberInfoOpt =
-//        Optional.ofNullable((Member) session.getAttributes().get("memberInfo"));
-//        logger.info("웹소켓서비스 removeSession 실행 {}", memberInfoOpt);
-//
-//        // 유저 정보가 존재할 경우에만 처리
-//        memberInfoOpt.ifPresent(memberInfo -> {
-//            String email = memberInfo.getEmail();
-//
-//            // userSessions에서 세션 제거
-//            userSessions.remove(email);
-//
-//            // 오프라인 상태로 방송
-//            broadcastUserStatus(email, false); // false로 설정하여 오프라인 상태 방송
-//
-//            logger.info("제거된 웹소켓 유저 세션 {}", memberInfo);
-//        });
-//
-//        // 세션 종료 처리
-//        try {
-//            session.close(); // 웹소켓 세션 종료
-//        } catch (IOException e) {
-//            logger.error("세션 종료 중 오류 발생", e);
-//        }
-//    }
-
     public void removeSession(WebSocketSession session) {
         // 세션에서 유저 정보를 가져옴 (이메일을 가져옴)
         String email = (String) session.getAttributes().get("email"); // "email" 키로 이메일을 가져옴
         logger.info("웹소켓서비스 removeSession 실행 - 이메일: {}", email);
 
-        if (email != null) { // 이메일이 null이 아닐 경우 처리
+        if (email != null) { //이메일 존재
             // userSessions에서 세션 제거
             userSessions.remove(email);
 
@@ -152,8 +125,6 @@ public class WebSocketService {
             response.put("users", usersArray);
 
             session.sendMessage(new TextMessage(response.toString()));
-
-            // 개선된 로그 메시지
             logger.info("온라인 사용자 목록 전송 완료 - 수신자: {}, 세션 ID: {}, 온라인 사용자 수: {}",
                     currentUserEmail, session.getId(), usersArray.length());
         } catch (IOException e) {
