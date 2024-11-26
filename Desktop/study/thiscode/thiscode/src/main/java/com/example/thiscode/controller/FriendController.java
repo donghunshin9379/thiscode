@@ -1,6 +1,7 @@
 package com.example.thiscode.controller;
 
 import com.example.thiscode.domain.FriendList;
+import com.example.thiscode.domain.FriendListDTO;
 import com.example.thiscode.domain.FriendRequest;
 import com.example.thiscode.service.FriendListService;
 import com.example.thiscode.service.FriendRequestService;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +27,6 @@ public class FriendController {
     private final FriendListService friendListService;
     private static final Logger logger = LoggerFactory.getLogger(FriendController.class);
 
-
     public FriendController(FriendRequestService friendRequestService, MemberService memberService, FriendListService friendListService) {
         this.friendRequestService = friendRequestService;
         this.memberService = memberService;
@@ -33,21 +34,23 @@ public class FriendController {
     }
 
     @PostMapping("/request")
-    public ResponseEntity<String> sendFriendRequest(@RequestBody String recipientUsername) {
-        String requesterUsername = memberService.getCurrentUsername();
-        friendRequestService.sendFriendRequest(requesterUsername, recipientUsername);
+    public ResponseEntity<String> sendFriendRequest(@RequestParam(name = "recipientEmail") String recipientEmail) {
+        String requesterEmail = memberService.getCurrentEmail(); // 현재 사용자 이메일 가져오기
+        friendRequestService.sendFriendRequest(requesterEmail, recipientEmail);
+        logger.info("요청자 : {}", requesterEmail);
+        logger.info("수신자 : {}", recipientEmail);
+
         return ResponseEntity.ok("친구 요청을 보냈습니다.");
     }
 
-
     // 대기중인 친구 요청 조회
     @GetMapping("/pending")
-    @ResponseBody // JSON으로 반환하여 HTML전체를 렌더링 하는게 아닌, 필요한 데이터만 보내 렌더링함(서버부하 내려감)
+    @ResponseBody
     public Map<String, Object> showPendingRequests() {
-        String myUsername = memberService.getCurrentUsername();
+        String myEmail = memberService.getCurrentEmail(); // 현재 사용자 이메일 가져오기
 
-        List<FriendRequest> sentRequests = friendRequestService.findPendingRequestsSent(myUsername);
-        List<FriendRequest> receivedRequests = friendRequestService.findPendingRequestsReceived(myUsername);
+        List<FriendRequest> sentRequests = friendRequestService.findPendingRequestsSent(myEmail);
+        List<FriendRequest> receivedRequests = friendRequestService.findPendingRequestsReceived(myEmail);
 
         Map<String, Object> response = new HashMap<>();
         response.put("sentRequests", sentRequests);
@@ -73,20 +76,48 @@ public class FriendController {
     @PostMapping("/block")
     @ResponseBody
     public ResponseEntity<String> blockFriendRequest(@RequestParam(name = "id") Long requestId) {
+        logger.info("차단할 요청 id: {}", requestId);
         try {
             friendRequestService.blockFriendRequest(requestId);
-            return ResponseEntity.ok("친구요청을 거절했습니다.");
+            return ResponseEntity.ok("친구 요청이 차단되었습니다.");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("거절 요청 에러");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("차단 요청 에러");
         }
     }
-
-    // 모든 친구 목록 보기
+    
+    // 친구목록 불러오기
     @GetMapping("/list")
-    @ResponseBody //반환값 직렬화
-    public ResponseEntity<List<FriendList>> getFriends() {
-        String userUsername = memberService.getCurrentUsername();
-        List<FriendList> myFriends = friendListService.getFriends(userUsername);
-        return ResponseEntity.ok(myFriends);
+    @ResponseBody
+    public ResponseEntity<List<FriendListDTO>> getFriends() {
+        String userEmail = memberService.getCurrentEmail(); // 현재 사용자 이메일 가져오기
+
+        // 요청자 기준으로 친구 목록 가져오기
+        List<FriendList> myFriendsAsRequester = friendListService.getFriends(userEmail);
+
+        // 수신자 기준으로 친구 목록 가져오기
+        List<FriendList> myFriendsAsRecipient = friendListService.getFriendsByRecipient(userEmail);
+
+        // 모든 친구 목록 통합
+        List<FriendListDTO> allMyFriends = new ArrayList<>();
+
+        // 요청자로서의 친구 목록 처리
+        myFriendsAsRequester.forEach(friendList -> {
+            FriendListDTO dto = new FriendListDTO();
+            dto.setId(friendList.getId());
+            dto.setUserEmail(friendList.getUser().getEmail());
+            dto.setFriendEmail(friendList.getFriend().getEmail());
+            allMyFriends.add(dto);
+        });
+
+        // 수신자로서의 친구 목록 처리
+        myFriendsAsRecipient.forEach(friendList -> {
+            FriendListDTO dto = new FriendListDTO();
+            dto.setId(friendList.getId());
+            dto.setUserEmail(friendList.getFriend().getEmail()); // 여기를 변경
+            dto.setFriendEmail(friendList.getUser().getEmail()); // 여기를 변경
+            allMyFriends.add(dto);
+        });
+
+        return ResponseEntity.ok(allMyFriends);
     }
 }

@@ -1,29 +1,24 @@
 package com.example.thiscode.repository;
 
-import com.example.thiscode.domain.FriendList;
 import com.example.thiscode.domain.FriendRequest;
 import com.example.thiscode.domain.FriendStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
-
 
 public interface FriendRequestRepository extends JpaRepository<FriendRequest, Long> {
-    // 보낸 친구요청
-    List<FriendRequest> findByRequesterUsernameAndStatus(String requesterUsername, FriendStatus status);
+    // 보낸 친구요청 상태
+    List<FriendRequest> findByRequesterEmailAndStatus(String requesterEmail, FriendStatus status);
 
-    // 받은 친구요청
-    List<FriendRequest> findByRecipientUsernameAndStatus(String recipientUsername, FriendStatus status);
+    // 받은 친구요청 상태
+    List<FriendRequest> findByRecipientEmailAndStatus(String recipientEmail, FriendStatus status);
 
-    // 아래 두 메소드는 친구요청시 필요함.
-    // 송신자 기준으로 요청을 찾는 메소드
-    List<FriendRequest> findByRequesterUsernameAndRecipientUsername(String requesterUsername, String recipientUsername);
-
-    // 요청자에게 수신된 요청을 찾는 메소드
-    List<FriendRequest> findByRecipientUsernameAndRequesterUsername(String recipientUsername, String requesterUsername);
+    // 요청자와 수신자 확인
+    List<FriendRequest> findByRequesterEmailAndRecipientEmail(String requesterEmail, String recipientEmail);
 
     // 이미 친구 상태(ACCEPTED)인 경우 조회
-    List<FriendRequest> findByRequesterUsernameAndRecipientUsernameAndStatus(String requesterUsername, String recipientUsername, FriendStatus status);
+    List<FriendRequest> findByRequesterEmailAndRecipientEmailAndStatus(String requesterEmail, String recipientEmail, FriendStatus status);
 
+    // 수신자가 발신자로부터 이미 요청을 받은 경우 확인
+    List<FriendRequest> findByRecipientEmailAndRequesterEmail(String recipientEmail, String requesterEmail);
 }

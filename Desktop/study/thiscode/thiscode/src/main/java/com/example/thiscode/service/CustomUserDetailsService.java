@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 //Security가 인증 처리하려면 DB에서 유저 정보를 UserDetails객체로 변환해야됌
+//AuthenticationManger 인증과정에 현재 레이어 메소드가 호출되어 HTML에서 추출된 로그인 정보와 비교
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
@@ -25,13 +26,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         Member member = springDataJpaMemberRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("이메일을 찾을 수 없습니다: " + email));
 
-        // Debugging logs
-        System.out.println("Loaded user: " + member.getEmail());
-
-        // Create a list of authorities (roles)
         List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(member.getRole().name()));
 
-        // Return a CustomUserDetails object with username and email
-        return new CustomUserDetails(member.getUsername(), member.getEmail(), member.getPassword(), authorities);
+        return new CustomUserDetails(member.getEmail(), member.getUsername(), member.getPassword(), authorities);
     }
 }

@@ -39,6 +39,7 @@ dependencies {
 	// Log4j2 의존성 추가
 	runtimeOnly 'org.apache.logging.log4j:log4j-to-slf4j'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.json:json:20210307'
 
 
 }

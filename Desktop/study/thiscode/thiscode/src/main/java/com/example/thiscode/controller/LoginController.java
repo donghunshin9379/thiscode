@@ -5,14 +5,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class LoginController {
-
-    @GetMapping("me")
-    public String home() {
-        return "me";
-    }
-
+    // 로그인
     @GetMapping("/login")
     public String login() {
         return "login";
+    }
+    
+    // 로그인 후
+    @GetMapping("/friends")
+    public String friends() {
+        return "friends";
     }
 }

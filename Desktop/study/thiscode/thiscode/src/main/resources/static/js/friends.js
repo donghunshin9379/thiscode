@@ -12,7 +12,7 @@ function showAddFriendModal() {
 function hideAddFriendModal() {
     document.getElementById('add-friend-modal').style.display = 'none';
     // 모달을 닫을 때 입력 필드 초기화
-    document.getElementById('recipient-username').value = '';
+    document.getElementById('recipient-email').value = '';
 }
 
 // 친구추가모달 외부 클릭 시 모달 닫기
@@ -23,38 +23,64 @@ window.onclick = function(event) {
     }
 };
 
+ // 친구 요청 보내기 함수
+    function sendFriendRequest() {
+        const email = document.getElementById('recipient-email').value;
+
+        // AJAX 요청 등을 통해 서버에 친구 요청 전송
+        // 예시:
+        fetch('/friends/request', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ recipientEmail: email })
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('친구 요청이 전송되었습니다.');
+                // 모달 닫기 및 입력 필드 초기화
+                document.getElementById('add-friend-modal').style.display = 'none';
+                document.getElementById('recipient-email').value = '';
+            } else {
+                alert('친구 요청 전송에 실패했습니다.');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+
 // 친구 요청 보내기
 document.getElementById('send-request-btn').onclick = function() {
-    const recipientUsername = document.getElementById('recipient-username').value.trim();
+    const recipientEmail = document.getElementById('recipient-email').value.trim(); // 이메일 입력값 가져오기
 
-    if (!recipientUsername) {
-        alert('이름(username)을 입력해 주세요.');
+    if (!recipientEmail) {
+        alert('이메일을 입력해 주세요.'); // 이메일 입력 확인
         return;
-}
+    }
 
     // AJAX 요청 (컨트롤러로)
-    fetch('/friends/request', {
+    fetch(`/friends/request?recipientEmail=${encodeURIComponent(recipientEmail)}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             [csrfHeader]: csrfToken
-        },
-        body: recipientUsername
+        }
     })
     .then(response => {
         return response.text().then(text => {
             if (response.ok) {
-                alert(text);
-                hideAddFriendModal();
-                fetchPendingRequests();
+                alert(text); // 성공 메시지 표시
+                hideAddFriendModal(); // 모달 닫기
+                fetchPendingRequests(); // 대기 중인 친구 요청 새로 고침
             } else {
-                alert(text);
+                alert(text); // 오류 메시지 표시
             }
         });
     })
     .catch(error => {
-        console.error('오류 발생:', error);
-        alert('오류가 발생했습니다. 나중에 다시 시도해 주세요.');
+        console.error('오류 발생:', error); // 콘솔에 오류 로그 출력
+        alert('오류가 발생했습니다. 나중에 다시 시도해 주세요.'); // 사용자에게 오류 알림
     });
 };
 
@@ -89,7 +115,7 @@ function displayPendingRequests(sentRequests, receivedRequests) {
 
     sentRequests.forEach(request => {
         const li = document.createElement('li');
-        li.innerHTML = `${request.recipientUsername}님에게 친구 요청을 보냈습니다. 상태: ${request.status}`;
+        li.innerHTML = `${request.recipientEmail}님에게 친구 요청을 보냈습니다. 상태: ${request.status}`; // username에서 email로 변경
         sentList.appendChild(li);
     });
 
@@ -99,9 +125,8 @@ function displayPendingRequests(sentRequests, receivedRequests) {
     console.log(receivedRequests);
 
     receivedRequests.forEach(request => {
-
         const li = document.createElement('li');
-        li.innerHTML = `${request.requesterUsername}님이 친구 요청을 보냈습니다.`;
+        li.innerHTML = `${request.requesterEmail}님이 친구 요청을 보냈습니다.`; // username에서 email로 변경
         li.innerHTML += `<input type="hidden" value="${request.id}" name="id">`;
         li.innerHTML += `<button type="button" class="accept" onclick="acceptRequest(${request.id})">수락</button>`;
         li.innerHTML += `<button type="button" class="block" onclick="blockRequest(${request.id})">차단</button>`;
@@ -112,56 +137,47 @@ function displayPendingRequests(sentRequests, receivedRequests) {
 }
 
 // 친구요청 수락 함수
- function acceptRequest(requestId) {
-     fetch(`/friends/accept?id=${requestId}`, {
-         method: 'POST',
-         headers: {
-             [csrfHeader]: csrfToken // CSRF 토큰 추가
-         }
-     })
-     .then(response => {
-         if (!response.ok) {
-             throw new Error('Failed to accept friend request');
-         }
-         return response.text();
-     })
-     .then(message => {
-         alert(message);
-         fetchPendingRequests(); // 친구 요청 목록 새로 고침
-     })
-     .catch(error => console.error('Error accepting friend request:', error));
- }
-
- // 친구요청 차단 함수
-  function blockRequest(requestId) {
-      fetch(`/friends/block?id=${requestId}`, {
-          method: 'POST',
-          headers: {
-              [csrfHeader]: csrfToken
-          }
-      })
-      .then(response => {
-          if (!response.ok) {
-              throw new Error('Failed to block friend request');
-          }
-          return response.text(); // 텍스트 응답을 받음
-      })
-      .then(message => {
-          alert(message); // 차단 성공 메세지
-          fetchPendingRequests(); // 친구 요청 목록 새로 고침
-      })
-      .catch(error => console.error('Error blocking friend request:', error));
-  }
-
-// 모든 친구 목록을 표시
-function showAllFriends() {
-    // 모든 섹션 숨기기
-    hideAllSections();
-    document.getElementById("all-friends-section").style.display = "block";
-
-    // 친구 목록 가져오기
-    fetchFriends();
+function acceptRequest(requestId) {
+    fetch(`/friends/accept?id=${requestId}`, {
+        method: 'POST',
+        headers: {
+            [csrfHeader]: csrfToken // CSRF 토큰 추가
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('친구 요청 수락에 실패했습니다.');
+        }
+        return response.text();
+    })
+    .then(message => {
+        alert(message);
+        fetchPendingRequests(); // 친구 요청 목록 새로 고침
+    })
+    .catch(error => console.error('Error accepting friend request:', error));
 }
+
+// 친구요청 차단 함수
+function blockRequest(requestId) {
+    fetch(`/friends/block?id=${requestId}`, {
+        method: 'POST',
+        headers: {
+            [csrfHeader]: csrfToken
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('친구 요청 차단에 실패했습니다.');
+        }
+        return response.text(); // 텍스트 응답을 받음
+    })
+    .then(message => {
+        alert(message); // 차단 성공 메세지
+        fetchPendingRequests(); // 친구 요청 목록 새로 고침
+    })
+    .catch(error => console.error('Error blocking friend request:', error));
+}
+
 
 // 친구 목록 가져오기
 function fetchFriends() {
@@ -196,23 +212,22 @@ function displayFriends(friends) {
         return;
     }
 
-     friends.forEach(friend => {
-            const li = document.createElement('li');
-            li.classList.add('friend-item');  // 클래스 추가
-            li.innerHTML = `
-                <div class="friend-bar">
-                    <span class="friend-name">${friend.friendUsername}</span>
-                    <button class="message-button" onclick="sendMessage('${friend.friendUsername}')">Message</button>
-                </div>
-            `;
-            friendsList.appendChild(li);
-        });
+    friends.forEach(friend => {
+        const li = document.createElement('li');
+        li.classList.add('friend-item');
+        li.innerHTML = `
+            <div class="friend-bar">
+                <span class="friend-email">${friend.friendEmail}</span>
+                <button class="message-button" onclick="sendMessage('${friend.friendEmail}')">Message</button>
+            </div>
+        `;
+        friendsList.appendChild(li);
+    });
 
     // 친구 목록이 화면에 표시된 후, 현재 검색어에 맞게 필터링
     const searchTerm = document.getElementById("search-input").value.toLowerCase();
     filterFriends(searchTerm);
 }
-
 
 // 친구 검색 이벤트
 document.getElementById("search-input").addEventListener("input", function() {
@@ -220,7 +235,7 @@ document.getElementById("search-input").addEventListener("input", function() {
     filterFriends(searchTerm);
 });
 
-// 친구목록 필터링 함수
+// 친구목록 필터링 함수 (email로 수정필요)
 function filterFriends(searchTerm) {
     const friendsListItems = document.querySelectorAll("#friends-list li");
 
@@ -234,71 +249,102 @@ function filterFriends(searchTerm) {
     });
 }
 
-// 메시지 전송 함수
-function sendMessage(friendUsername) {
-    // 대화방 ID를 가져오는 API 요청
-    fetch(`/messages/rooms?username=${friendUsername}`, {
-        method: 'GET',
+// 로그아웃 함수
+function logout() {
+    // CSRF 토큰 가져오기
+    var csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    var csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    // POST 요청
+    fetch('/logout', {
+        method: 'POST',
         headers: {
-            [csrfHeader]: csrfToken // CSRF 토큰 추가
+            [csrfHeader]: csrfToken
+        },
+        credentials: 'same-origin'
+    }).then(response => {
+        if (response.ok) {
+            // 로그아웃 성공 시
+            window.location.href = '/login';
+        } else {
+            console.error('로그아웃 실패');
         }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('대화방을 가져오는 데 실패했습니다.'); // 사용자 친화적인 오류 메시지
-        }
-        return response.json(); // JSON 데이터를 반환받음
-    })
-    .then(data => {
-        const roomId = data.id; // 대화방 ID
-        // 메시지 전송을 위한 UI를 열거나 관련 로직을 추가
-        openChatRoom(roomId); // 대화방 열기 함수 호출
-    })
-    .catch(error => {
-        console.error('Error fetching room:', error);
-        alert(error.message); // 사용자에게 오류 메시지 표시
+    }).catch(error => {
+        console.error('로그아웃 중 오류 발생:', error);
     });
 }
 
-// 대화방 열기 함수
-function openChatRoom(roomId) {
-    // 대화방 UI를 열고, 해당 대화방의 메시지를 불러오는 로직 구현
-    console.log(`Opening chat room with ID: ${roomId}`);
-    // 추가 로직을 여기에 작성
+// 웹소켓 서버에 온라인 사용자 요청
+function getOnlineUsers() {
+    if (socket) { // socket이 정의되어 있는지 확인
+        socket.send(JSON.stringify({ type: 'getOnlineUsers' }));
+        console.log("온라인유저를 불러옵니다.")
+    } else {
+        console.error("Socket이 연결되지 않았습니다.");
+    }
+}
+
+// 서버한테 받은 온라인 사용자 목록 표시
+function displayOnlineUsers(users) {
+    const userListContainer = document.getElementById('onlineUsersList'); // 사용자 목록을 표시할 HTML 요소
+    const onlineSection = document.getElementById('online-section'); // 온라인 섹션
+
+    // 기존 목록 초기화
+    userListContainer.innerHTML = '';
+
+    // 사용자 정보를 HTML로 추가
+    users.forEach(user => {
+        const userItem = document.createElement('li');
+        userItem.textContent = user.email; // 사용자 이메일 또는 다른 정보를 표시
+        userListContainer.appendChild(userItem);
+    });
+
+    // 온라인 섹션을 표시
+    if (users.length > 0) {
+        onlineSection.style.display = 'block'; // 사용자가 있을 경우 섹션 보이기
+    } else {
+        onlineSection.style.display = 'none'; // 사용자가 없을 경우 섹션 숨기기
+    }
+
+    console.log('온라인 사용자 목록이 업데이트되었습니다.');
 }
 
 
 
-// 페이지가 로드될 때 TAB 초기 설정
+// 상단 탭 설정
 document.addEventListener("DOMContentLoaded", function() {
-    // 초기 상태 설정
     hideAllSections(); // 모든 섹션 숨기기
-    document.getElementById('pending-section').style.display = 'none'; // 기본적으로 대기 중 섹션은 보이지 않음
 
     // 탭 클릭 이벤트 설정
     document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', function() {
             const activeTabId = this.id;
-            console.log("클릭된 탭 ID:", activeTabId); // 클릭된 탭 ID 확인
+            console.log("클릭된 탭 ID:", activeTabId);
 
-            hideAllSections(); // 모든 섹션 숨기기
+            hideAllSections();
 
             // 탭 클릭 분기처리
             if (activeTabId === 'pending-tab') {
-                fetchPendingRequests(); // 대기 중 요청 가져옴
-                document.getElementById('pending-section').style.display = 'block'; // 대기 중 섹션 표시
+                fetchPendingRequests();
+                document.getElementById('pending-section').style.display = 'block';
             } else if (activeTabId === 'friends-tab') {
-                showAllFriends(); // 모든 친구 목록 보기
+                fetchFriends();
+                document.getElementById("all-friends-section").style.display = "block";
             } else if (activeTabId === 'blocked-tab') {
-                document.getElementById('blocked-section').style.display = 'block'; // 차단 목록 섹션 표시
+                document.getElementById('blocked-section').style.display = 'block';
+            } else if (activeTabId === 'online-tab') {
+                getOnlineUsers(); // 온라인 탭 클릭 시 사용자 목록 요청
+                document.getElementById('online-section').style.display = 'block';
             }
         });
     });
 });
 
+
 // 모든 섹션 숨기는 함수
 function hideAllSections() {
-    document.querySelectorAll('.pending-section, .friends-section, .blocked-section').forEach(section => {
+    document.querySelectorAll('.pending-section, .friends-section, .blocked-section, .online-section')
+    .forEach(section => {
         section.style.display = 'none';
     });
 }

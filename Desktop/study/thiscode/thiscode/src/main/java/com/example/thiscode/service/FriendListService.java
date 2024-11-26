@@ -2,31 +2,28 @@ package com.example.thiscode.service;
 
 import com.example.thiscode.domain.FriendList;
 import com.example.thiscode.repository.FriendListRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class FriendListService {
+
     private final FriendListRepository friendListRepository;
 
+    @Autowired
     public FriendListService(FriendListRepository friendListRepository) {
         this.friendListRepository = friendListRepository;
     }
 
-    @Transactional(readOnly = true)
-    public List<FriendList> getFriends(String userUsername) {
-        return friendListRepository.findByUserUsername(userUsername);
+    // 특정 사용자의 친구 목록 가져오기 (요청자 기준)
+    public List<FriendList> getFriends(String userEmail) {
+        return friendListRepository.findByUserEmail(userEmail);
     }
 
-    @Transactional
-    public void addFriend(String userUsername, String friendUsername) {
-        // 두 개의 친구 관계 추가 (양방향)
-        FriendList friendList1 = new FriendList(userUsername, friendUsername);
-        FriendList friendList2 = new FriendList(friendUsername, userUsername);
-
-        friendListRepository.save(friendList1);
-        friendListRepository.save(friendList2);
+    // 특정 사용자의 친구 목록 가져오기 (수신자 기준)
+    public List<FriendList> getFriendsByRecipient(String userEmail) {
+        return friendListRepository.findByFriendEmail(userEmail);
     }
 }

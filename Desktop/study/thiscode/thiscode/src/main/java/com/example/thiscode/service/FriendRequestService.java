@@ -1,14 +1,15 @@
 package com.example.thiscode.service;
 
-import com.example.thiscode.controller.FriendController;
+import com.example.thiscode.domain.FriendList;
 import com.example.thiscode.domain.FriendRequest;
 import com.example.thiscode.domain.FriendStatus;
 import com.example.thiscode.domain.Member;
+import com.example.thiscode.repository.FriendListRepository;
 import com.example.thiscode.repository.FriendRequestRepository;
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,93 +17,99 @@ import java.util.List;
 public class FriendRequestService {
 
     private final FriendRequestRepository friendRequestRepository;
+    private final FriendListRepository friendListRepository;
     private final MemberService memberService;
-    private final FriendListService friendListService;
-    private static final Logger logger = LoggerFactory.getLogger(FriendController.class);
+    private static final Logger logger = LoggerFactory.getLogger(FriendRequestService.class);
 
-    public FriendRequestService(FriendRequestRepository friendRequestRepository, MemberService memberService, FriendListService friendListService) {
+    public FriendRequestService(FriendRequestRepository friendRequestRepository, FriendListRepository friendListRepository, MemberService memberService) {
         this.friendRequestRepository = friendRequestRepository;
+        this.friendListRepository = friendListRepository;
         this.memberService = memberService;
-        this.friendListService = friendListService;
     }
 
     @Transactional
-    public void sendFriendRequest(String requesterUsername, String recipientUsername) {
-        // 요청자를 찾기
-        Member requester = memberService.findByUsername(requesterUsername);
-        // 수신자를 찾기
-        Member recipient = memberService.findByUsername(recipientUsername);
+    public void sendFriendRequest(String requesterEmail, String recipientEmail) {
+        Member requester = memberService.findByEmail(requesterEmail);
+        Member recipient = memberService.findByEmail(recipientEmail);
 
         if (requester == null || recipient == null) {
             throw new IllegalArgumentException("서비스레이어 : 사용자를 찾을 수 없습니다.");
         }
 
-        // 요청자가 보낸 요청이 있는 경우 확인
+        // 요청자 중복 요청 방지
         List<FriendRequest> existingRequest = friendRequestRepository
-                .findByRequesterUsernameAndRecipientUsername(requesterUsername, recipientUsername); // 나(요청자), 받을 사람
+                .findByRequesterEmailAndRecipientEmail(requesterEmail, recipientEmail);
         if (!existingRequest.isEmpty()) {
-            // 이미 보낸 요청이 있는 경우
             throw new IllegalStateException("이미 친구요청을 보냈습니다.");
         }
 
-        // 요청자에게 이미 수신된 요청 확인
+        // 수신자가 이미 발신자에게 요청을 받은 경우 확인
         List<FriendRequest> existingReceivedRequest = friendRequestRepository
-                .findByRecipientUsernameAndRequesterUsername(requesterUsername,recipientUsername ); // 수신자, 요청자
-        logger.info("요청자에게 이미 요청한 유저네임{}", recipientUsername);
-        logger.info("현재 유저네임{}", requesterUsername);
-        logger.info("수신된 요청 수: {}", existingReceivedRequest.size());
+                .findByRecipientEmailAndRequesterEmail(requesterEmail, recipientEmail);
 
         if (!existingReceivedRequest.isEmpty()) {
-            throw new IllegalStateException("해당 유저에게 이미 수신된 요청이 존재합니다.");
+            throw new IllegalStateException("해당 유저가 이미 요청을 보냈습니다.");
         }
 
         // 요청자와 수신자가 이미 ACCEPTED 상태로 친구인지 확인
         List<FriendRequest> existingAcceptedFriend = friendRequestRepository
-                .findByRequesterUsernameAndRecipientUsernameAndStatus(requesterUsername, recipientUsername, FriendStatus.ACCEPTED);
+                .findByRequesterEmailAndRecipientEmailAndStatus(requesterEmail, recipientEmail, FriendStatus.ACCEPTED);
 
         if (!existingAcceptedFriend.isEmpty()) {
             throw new IllegalStateException("이미 친구로 등록된 유저입니다.");
         }
 
-        FriendRequest friendRequest = new FriendRequest(requesterUsername, recipientUsername);
+        // 친구 요청 생성 및 저장
+        FriendRequest friendRequest = new FriendRequest(requesterEmail, recipientEmail);
         friendRequestRepository.save(friendRequest);
     }
 
-    // 송신자 입장 친구요청 목록
+    // 보낸 친구요청 목록 조회
     @Transactional
-    public List<FriendRequest> findPendingRequestsSent(String requesterUsername) {
-        return friendRequestRepository.findByRequesterUsernameAndStatus(requesterUsername, FriendStatus.PENDING);
+    public List<FriendRequest> findPendingRequestsSent(String requesterEmail) {
+        return friendRequestRepository.findByRequesterEmailAndStatus(requesterEmail, FriendStatus.PENDING);
     }
 
-    // 수신자 입장 친구요청 목록
+    // 받은 친구요청 목록 조회
     @Transactional
-    public List<FriendRequest> findPendingRequestsReceived(String recipientUsername) {
-        return friendRequestRepository.findByRecipientUsernameAndStatus(recipientUsername, FriendStatus.PENDING);
+    public List<FriendRequest> findPendingRequestsReceived(String recipientEmail) {
+        return friendRequestRepository.findByRecipientEmailAndStatus(recipientEmail, FriendStatus.PENDING);
     }
-
-    // 친구 요청 수락
+    
+    
+    // 친구요청 수락
     @Transactional
     public void acceptFriendRequest(Long requestId) {
+        // 친구 요청 조회
         FriendRequest request = friendRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalStateException("수락할 친구 요청이 없습니다."));
 
+        // 친구 요청 수락
         request.acceptRequest();
-        friendRequestRepository.save(request);
-        logger.info("{}님의 친구 요청을 수락했습니다.", request.getRequesterUsername());
+        friendRequestRepository.save(request); // 친구 요청 상태 저장
 
         // 친구 목록에 추가
-        friendListService.addFriend(request.getRequesterUsername(), request.getRecipientUsername());
+        FriendList friendList = new FriendList();
+
+        // 요청자의 Member 객체를 가져옵니다.
+        Member requester = memberService.findByEmail(request.getRequesterEmail());
+        // 수신자의 Member 객체를 가져옵니다.
+        Member recipient = memberService.findByEmail(request.getRecipientEmail());
+
+        // user와 friend 필드 설정
+        friendList.setUser(requester);  // 요청자
+        friendList.setFriend(recipient); // 수신자
+
+        friendListRepository.save(friendList); // 친구 목록 저장
     }
 
-    // 친구 요청 차단
+    // 친구요청 거절
     @Transactional
     public void blockFriendRequest(Long requestId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalStateException("수락할 친구 요청이 없습니다."));
+                .orElseThrow(() -> new IllegalStateException("차단할 친구 요청이 없습니다."));
 
-        request.blockRequest();
-        friendRequestRepository.save(request);
-        logger.info("{}님의 친구 요청을 거절했습니다.", request.getRequesterUsername());
+        request.blockRequest(); // 요청을 차단 상태로 변경
+        friendRequestRepository.save(request); // 변경 사항 저장
     }
-
 }

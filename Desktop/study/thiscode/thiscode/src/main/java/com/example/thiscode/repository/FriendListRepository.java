@@ -5,10 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface FriendListRepository extends JpaRepository<FriendList, String> {
-    // 친구 목록 조회
-    List<FriendList> findByUserUsername(String userUsername);
+public interface FriendListRepository extends JpaRepository<FriendList, Long> {
+    // 특정 사용자의 친구 목록 조회
+    List<FriendList> findByUserEmail(String userEmail);
 
-    // 친구 목록 table 저장
-    FriendList save(FriendList friendList); 
+    // 특정 사용자의 친구 목록 조회 (친구의 이메일 기준)
+    List<FriendList> findByFriendEmail(String friendEmail);
+    
+
 }

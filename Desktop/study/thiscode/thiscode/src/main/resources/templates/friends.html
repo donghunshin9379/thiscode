@@ -18,6 +18,9 @@
         <div class="tab" id="friends-tab">모두</div>
         <div class="tab" id="pending-tab">대기중</div>
         <div class="tab" id="blocked-tab">차단목록</div>
+        <div class="tab" id="logout-tab">
+            <a href="javascript:void(0);" onclick="logout()">로그아웃</a>
+        </div>
     </div>
     <!-- 오른쪽 친구추가 버튼 -->
     <div class="add-friend" id="add-friend-btn" onclick="showAddFriendModal()">친구추가</div>
@@ -25,13 +28,13 @@
 
 <!-- 친구 추가 모달 (숨겨져 있음) -->
 <div id="add-friend-modal" style="display: none;">
-    <input type="text" id="recipient-username" placeholder="이름(username) 입력">
-    <button id="send-request-btn">친구 요청 보내기</button>
+    <input type="email" id="recipient-email" placeholder="이메일 입력" required>
+    <button id="send-request-btn" onclick="sendFriendRequest()">친구 요청 보내기</button>
 </div>
 
 <!-- 대기중인 친구 요청 -->
 <div class="pending-section" id="pending-section" style="display: none;">
-    <h2>대기 중 친구 요청</h2>
+    <h2>대기 중</h2>
 
     <h3>보낸 요청</h3>
     <ul id="sent-requests"></ul>
@@ -39,7 +42,6 @@
     <h3>받은 요청</h3>
     <ul id="received-requests"></ul>
 </div>
-
 
 <!-- 모든 친구 목록 -->
 <div class="friends-section" id="all-friends-section" style="display: none;">
@@ -53,17 +55,25 @@
     <h2>차단 목록</h2>
     <ul>
         <li th:each="blocked : ${blockedUsers}">
-            <span th:text="${blocked.username}"></span>
+            <span th:text="${blocked.email}"></span> <!-- 이메일로 변경 -->
             <form th:action="@{/friends/unblock}" method="post" style="display:inline;">
-                <input type="hidden" th:value="${blocked.username}" name="username"/>
+                <input type="hidden" th:value="${blocked.email}" name="email"/>
                 <button type="submit">차단 해제</button>
             </form>
         </li>
     </ul>
 </div>
 
+<!-- 온라인 친구 목록-->
+<div class="online-section" id="online-section" style="display: none;">
+    <h2>온라인</h2>
+    <ul id="onlineUsersList"></ul>
+</div>
+
 <!-- 자바스크립트 -->
+<script th:src="@{/js/web-socket.js}"></script>
 <script th:src="@{/js/friends.js}"></script>
+
 
 </body>
 </html>

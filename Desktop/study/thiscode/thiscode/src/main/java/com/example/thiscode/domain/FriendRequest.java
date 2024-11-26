@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "friend_request",
         uniqueConstraints = @UniqueConstraint(columnNames =
-        {"requester_username", "recipient_username"})) // 유일성 제약 조건 추가
+                {"requester_email", "recipient_email"})) // 유일성 제약 조건 추가
 @Getter
 @Setter
 public class FriendRequest {
@@ -18,11 +18,11 @@ public class FriendRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "requester_username", nullable = false)
-    private String requesterUsername;
+    @Column(name = "requester_email", nullable = false)
+    private String requesterEmail; // 요청자의 이메일
 
-    @Column(name = "recipient_username", nullable = false)
-    private String recipientUsername;
+    @Column(name = "recipient_email", nullable = false)
+    private String recipientEmail; // 수신자의 이메일
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -31,8 +31,6 @@ public class FriendRequest {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-
-
     // 기본 생성자
     public FriendRequest() {
         this.createdAt = LocalDateTime.now(); // 생성 시각 자동 설정
@@ -40,9 +38,9 @@ public class FriendRequest {
     }
 
     // 생성자
-    public FriendRequest(String requesterUsername, String recipientUsername) {
-        this.requesterUsername = requesterUsername;
-        this.recipientUsername = recipientUsername;
+    public FriendRequest(String requesterEmail, String recipientEmail) {
+        this.requesterEmail = requesterEmail;
+        this.recipientEmail = recipientEmail;
         this.createdAt = LocalDateTime.now(); // 생성 시각 자동 설정
         this.status = FriendStatus.PENDING; // 기본 상태 설정
     }
@@ -61,12 +59,9 @@ public class FriendRequest {
     @Override
     public String toString() {
         return "FriendRequest{" +
-                "requesterUsername='" + requesterUsername + '\'' +
-                ", recipientUsername='" + recipientUsername + '\'' +
+                "requesterEmail='" + requesterEmail + '\'' +
+                ", recipientEmail='" + recipientEmail + '\'' +
                 ", status=" + status +
                 '}';
     }
-
 }
-
-
