@@ -65,13 +65,11 @@ public class FriendRequestService {
     }
 
     // 보낸 친구요청 목록 조회
-    @Transactional
     public List<FriendRequest> findPendingRequestsSent(String requesterEmail) {
         return friendRequestRepository.findByRequesterEmailAndStatus(requesterEmail, FriendStatus.PENDING);
     }
 
     // 받은 친구요청 목록 조회
-    @Transactional
     public List<FriendRequest> findPendingRequestsReceived(String recipientEmail) {
         return friendRequestRepository.findByRecipientEmailAndStatus(recipientEmail, FriendStatus.PENDING);
     }
@@ -112,4 +110,10 @@ public class FriendRequestService {
         request.blockRequest(); // 요청을 차단 상태로 변경
         friendRequestRepository.save(request); // 변경 사항 저장
     }
+
+    // 차단한 요청자 조회(이메일)
+    public List<FriendRequest> findBlockedEmail(String recipientEmail) {
+        return friendRequestRepository.findByRecipientEmailAndStatus(recipientEmail, FriendStatus.BLOCKED);
+    }
+
 }

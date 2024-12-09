@@ -249,7 +249,7 @@ function filterFriends(searchTerm) {
     });
 }
 
-// 로그아웃 함수
+// 로그아웃 탭
 function logout() {
     // CSRF 토큰 가져오기
     var csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
@@ -274,41 +274,33 @@ function logout() {
     });
 }
 
-// 웹소켓 서버에 온라인 사용자 요청
-function getOnlineUsers() {
-    if (socket) { // socket이 정의되어 있는지 확인
-        socket.send(JSON.stringify({ type: 'getOnlineUsers' }));
-        console.log("온라인유저를 불러옵니다.")
-    } else {
-        console.error("Socket이 연결되지 않았습니다.");
-    }
+//차단목록 탭
+function loadBlockedUsers() {
+    fetch('/friends/block-list')
+        .then(response => response.json())
+        .then(blockedEmails => {
+            const blockedList = document.getElementById('block-list');
+            blockedList.innerHTML = ''; // 기존 목록 초기화
+            blockedEmails.forEach(email => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${email}</span>
+                    <form action="/friends/unblock" method="post" style="display:inline;">
+                        <input type="hidden" value="${email}" name="email"/>
+                        <button type="submit">차단 해제</button>
+                    </form>
+                `;
+                blockedList.appendChild(li);
+            });
+            document.getElementById('blocked-section').style.display = 'block';
+        })
+        .catch(error => console.error('Error:', error));
 }
 
-// 서버한테 받은 온라인 사용자 목록 표시
-function displayOnlineUsers(users) {
-    const userListContainer = document.getElementById('onlineUsersList'); // 사용자 목록을 표시할 HTML 요소
-    const onlineSection = document.getElementById('online-section'); // 온라인 섹션
-
-    // 기존 목록 초기화
-    userListContainer.innerHTML = '';
-
-    // 사용자 정보를 HTML로 추가
-    users.forEach(user => {
-        const userItem = document.createElement('li');
-        userItem.textContent = user.email; // 사용자 이메일 또는 다른 정보를 표시
-        userListContainer.appendChild(userItem);
-    });
-
-    // 온라인 섹션을 표시
-    if (users.length > 0) {
-        onlineSection.style.display = 'block'; // 사용자가 있을 경우 섹션 보이기
-    } else {
-        onlineSection.style.display = 'none'; // 사용자가 없을 경우 섹션 숨기기
-    }
-
-    console.log('온라인 사용자 목록이 업데이트되었습니다.');
+// 온라인 탭
+function fetchOnlineFriends() {
+    socket.send(JSON.stringify({ type: "requestOnlineFriends" }));
 }
-
 
 
 // 상단 탭 설정
@@ -320,31 +312,49 @@ document.addEventListener("DOMContentLoaded", function() {
         tab.addEventListener('click', function() {
             const activeTabId = this.id;
             console.log("클릭된 탭 ID:", activeTabId);
-
-            hideAllSections();
-
-            // 탭 클릭 분기처리
-            if (activeTabId === 'pending-tab') {
-                fetchPendingRequests();
-                document.getElementById('pending-section').style.display = 'block';
-            } else if (activeTabId === 'friends-tab') {
-                fetchFriends();
-                document.getElementById("all-friends-section").style.display = "block";
-            } else if (activeTabId === 'blocked-tab') {
-                document.getElementById('blocked-section').style.display = 'block';
-            } else if (activeTabId === 'online-tab') {
-                getOnlineUsers(); // 온라인 탭 클릭 시 사용자 목록 요청
-                document.getElementById('online-section').style.display = 'block';
-            }
+            handleTabClick(activeTabId);
         });
     });
 });
 
 
+
+// 탭 클릭 처리 함수
+function handleTabClick(activeTabId) {
+    hideAllSections();
+
+    switch (activeTabId) {
+        case 'pending-tab':
+            fetchPendingRequests();
+            document.getElementById('pending-section').style.display = 'block';
+            break;
+        case 'friends-tab':
+            fetchFriends();
+            document.getElementById('all-friends-section').style.display = "block";
+            break;
+        case 'blocked-tab':
+            loadBlockedUsers();
+            document.getElementById('blocked-section').style.display = 'block';
+            break;
+        case 'online-tab':
+            // 온라인 친구 목록이 이미 로드되었는지 확인
+            if (document.getElementById('onlineUsersList').childElementCount === 0) {
+                // 온라인 친구 목록이 비어있으면 서버에서 가져오기
+                fetchOnlineFriends(); // 이 함수는 서버에서 온라인 친구 목록을 가져오는 역할
+            }
+            document.getElementById('online-section').style.display = 'block';
+            break;
+        default:
+            console.warn("알 수 없는 탭 ID:", activeTabId);
+    }
+}
+
+
+
 // 모든 섹션 숨기는 함수
 function hideAllSections() {
     document.querySelectorAll('.pending-section, .friends-section, .blocked-section, .online-section')
-    .forEach(section => {
-        section.style.display = 'none';
-    });
+        .forEach(section => {
+            section.style.display = 'none';
+        });
 }

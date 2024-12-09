@@ -1,6 +1,5 @@
 package com.example.thiscode.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +17,6 @@ public class Member {
 
     private String nickname;
     private String username;
-    @JsonIgnore // 이 어노테이션으로 비밀번호 필드를 JSON 직렬화에서 제외
     private String password;
     private LocalDate localDate;
 

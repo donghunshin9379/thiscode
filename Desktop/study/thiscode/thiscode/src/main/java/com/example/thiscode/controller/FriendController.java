@@ -1,5 +1,6 @@
 package com.example.thiscode.controller;
 
+import com.example.thiscode.domain.CustomUserDetails;
 import com.example.thiscode.domain.FriendList;
 import com.example.thiscode.domain.FriendListDTO;
 import com.example.thiscode.domain.FriendRequest;
@@ -10,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("friends")
@@ -32,10 +36,12 @@ public class FriendController {
         this.memberService = memberService;
         this.friendListService = friendListService;
     }
-
+    
+    // 친구요청 메소드
     @PostMapping("/request")
-    public ResponseEntity<String> sendFriendRequest(@RequestParam(name = "recipientEmail") String recipientEmail) {
-        String requesterEmail = memberService.getCurrentEmail(); // 현재 사용자 이메일 가져오기
+    public ResponseEntity<String> sendFriendRequest(@RequestParam(name = "recipientEmail") String recipientEmail,
+                                                    @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String requesterEmail = userDetails.getEmail();
         friendRequestService.sendFriendRequest(requesterEmail, recipientEmail);
         logger.info("요청자 : {}", requesterEmail);
         logger.info("수신자 : {}", recipientEmail);
@@ -46,8 +52,8 @@ public class FriendController {
     // 대기중인 친구 요청 조회
     @GetMapping("/pending")
     @ResponseBody
-    public Map<String, Object> showPendingRequests() {
-        String myEmail = memberService.getCurrentEmail(); // 현재 사용자 이메일 가져오기
+    public Map<String, Object> showPendingRequests(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        String myEmail = userDetails.getEmail();
 
         List<FriendRequest> sentRequests = friendRequestService.findPendingRequestsSent(myEmail);
         List<FriendRequest> receivedRequests = friendRequestService.findPendingRequestsReceived(myEmail);
@@ -63,7 +69,6 @@ public class FriendController {
     @PostMapping("/accept")
     @ResponseBody
     public ResponseEntity<String> acceptFriendRequest(@RequestParam(name = "id") Long requestId) {
-        logger.info("요청 id: {}", requestId);
         try {
             friendRequestService.acceptFriendRequest(requestId);
             return ResponseEntity.ok("친구요청을 수락했습니다.");
@@ -76,7 +81,6 @@ public class FriendController {
     @PostMapping("/block")
     @ResponseBody
     public ResponseEntity<String> blockFriendRequest(@RequestParam(name = "id") Long requestId) {
-        logger.info("차단할 요청 id: {}", requestId);
         try {
             friendRequestService.blockFriendRequest(requestId);
             return ResponseEntity.ok("친구 요청이 차단되었습니다.");
@@ -88,8 +92,8 @@ public class FriendController {
     // 친구목록 불러오기
     @GetMapping("/list")
     @ResponseBody
-    public ResponseEntity<List<FriendListDTO>> getFriends() {
-        String userEmail = memberService.getCurrentEmail(); // 현재 사용자 이메일 가져오기
+    public ResponseEntity<List<FriendListDTO>> getFriends(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        String userEmail = userDetails.getEmail();
 
         // 요청자 기준으로 친구 목록 가져오기
         List<FriendList> myFriendsAsRequester = friendListService.getFriends(userEmail);
@@ -119,5 +123,17 @@ public class FriendController {
         });
 
         return ResponseEntity.ok(allMyFriends);
+    }
+
+    @GetMapping("/block-list")
+    public ResponseEntity<List<String>> getBlockedUsers(Authentication authentication) {
+        String userEmail = authentication.getName(); // 현재 인증된 사용자의 이메일을 가져옵니다.
+        List<FriendRequest> blockedRequests = friendRequestService.findBlockedEmail(userEmail);
+
+        List<String> blockedEmails = blockedRequests.stream()
+                .map(FriendRequest::getRequesterEmail)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(blockedEmails);
     }
 }

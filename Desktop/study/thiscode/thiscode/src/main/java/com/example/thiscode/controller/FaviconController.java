@@ -9,6 +9,5 @@ public class FaviconController {
     @GetMapping("favicon.ico")
     @ResponseBody
     void returnNoFavicon() {
-        // 아무 것도 반환하지 않음
     }
 }

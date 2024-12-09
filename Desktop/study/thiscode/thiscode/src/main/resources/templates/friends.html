@@ -53,9 +53,9 @@
 <!-- 차단 목록 -->
 <div class="blocked-section" id="blocked-section" style="display: none;">
     <h2>차단 목록</h2>
-    <ul>
+    <ul id="block-list">
         <li th:each="blocked : ${blockedUsers}">
-            <span th:text="${blocked.email}"></span> <!-- 이메일로 변경 -->
+            <span th:text="${blocked.email}"></span>
             <form th:action="@{/friends/unblock}" method="post" style="display:inline;">
                 <input type="hidden" th:value="${blocked.email}" name="email"/>
                 <button type="submit">차단 해제</button>

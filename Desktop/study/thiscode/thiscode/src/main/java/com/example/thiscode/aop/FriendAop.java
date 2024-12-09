@@ -5,17 +5,15 @@ import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
 @Aspect
 @Component
-public class FriendServiceAop {
+public class FriendAop {
 
-    private static final Logger logger = LoggerFactory.getLogger(FriendServiceAop.class);
+    private static final Logger logger = LoggerFactory.getLogger(FriendAop.class);
 
     @AfterThrowing(pointcut = "execution(* com.example.thiscode.service.FriendService.*(..))", throwing = "ex")
     public void handleServiceExceptions(JoinPoint joinPoint, Exception ex) throws Exception {

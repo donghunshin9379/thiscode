@@ -35,9 +35,9 @@ public class SignupController {
     public ResponseEntity<String> signup(@RequestBody Member member) {
         try {
             memberService.save(member);
-            return ResponseEntity.ok("{\"message\":\"회원가입 성공\"}"); // JSON 형식으로 변경
+            return ResponseEntity.ok("{\"message\":\"회원가입 성공\"}");
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body("{\"error\":\"이미 존재하는 회원입니다.\"}"); // JSON 형식으로 변경
+            return ResponseEntity.badRequest().body("{\"error\":\"이미 존재하는 회원입니다.\"}");
         }
     }
 

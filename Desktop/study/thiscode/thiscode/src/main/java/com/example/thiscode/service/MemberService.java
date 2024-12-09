@@ -1,19 +1,13 @@
 package com.example.thiscode.service;
 
 import com.example.thiscode.controller.FriendController;
-import com.example.thiscode.domain.CustomUserDetails;
 import com.example.thiscode.domain.Member;
 import com.example.thiscode.repository.SpringDataJpaMemberRepository;
 import com.example.thiscode.util.PasswordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -26,19 +20,7 @@ public class MemberService {
         this.springDataJpaMemberRepository = springDataJpaMemberRepository;
     }
 
-    // 로그인 인증한 Email GET
-    public String getCurrentEmail() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-            logger.info("getCurrentEmail() {}",userDetails.getEmail());
-            return userDetails.getEmail();
-        }
-        return null;
-    }
-
     public Optional<Member> getUserInfo(String email) {
-        // 이메일로 회원 정보를 조회 (비밀번호 제외)
         return springDataJpaMemberRepository.findUserInfoByEmail(email);
     }
     
@@ -63,13 +45,7 @@ public class MemberService {
         return springDataJpaMemberRepository.findByEmail(email).isPresent();
     }
 
-    // 전체회원 조회
-    public List<Member> findMembers() {
-        return springDataJpaMemberRepository.findAll();
-    }
-
     public Member findByEmail(String email) {
-        logger.info("findByEmail 검색: {}", email);
         return springDataJpaMemberRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
     }

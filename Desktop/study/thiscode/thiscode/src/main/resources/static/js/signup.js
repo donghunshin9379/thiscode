@@ -12,10 +12,23 @@ document.getElementById('signupForm').addEventListener('submit', function(event)
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     const birthYear = document.getElementById('birthYear').value;
-    const birthMonth = document.getElementById('birthMonth').value.padStart(2, '0'); // 월을 2자리로 보장
-    const birthDay = document.getElementById('birthDay').value.padStart(2, '0'); // 일을 2자리로 보장
+    const birthMonth = document.getElementById('birthMonth').value.padStart(2, '0'); // 월을 2자리
+    const birthDay = document.getElementById('birthDay').value.padStart(2, '0'); // 일을 2자리
 
     const localDateString = `${birthYear}-${birthMonth}-${birthDay}`;
+    // 전송할 데이터 객체 생성
+        const requestData = {
+            email: email,
+            nickname: nickname,
+            username: username,
+            password: password,
+            localDate: localDateString
+        };
+
+        // JSON 형식 확인을 위한 로그 추가
+        console.log("Request Body:", JSON.stringify(requestData)); // JSON.stringify로 문자열화하여 로그 출력
+
+
 
     fetch('/signup', {
         method: 'POST',

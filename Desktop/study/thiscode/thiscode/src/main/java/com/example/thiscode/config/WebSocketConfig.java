@@ -1,6 +1,6 @@
 package com.example.thiscode.config;
 
-import com.example.thiscode.handler.CustomWebSocketHandler;
+import com.example.thiscode.controller.CustomWebSocketController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.*;
@@ -10,14 +10,14 @@ import org.springframework.web.socket.config.annotation.*;
 public class WebSocketConfig implements WebSocketConfigurer {
 
     @Autowired
-    private final CustomWebSocketHandler customWebSocketHandler;
+    private final CustomWebSocketController customWebSocketController;
 
-    public WebSocketConfig(CustomWebSocketHandler customWebSocketHandler) {
-        this.customWebSocketHandler = customWebSocketHandler;
+    public WebSocketConfig(CustomWebSocketController customWebSocketController) {
+        this.customWebSocketController = customWebSocketController;
     }
-
+    //2
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(customWebSocketHandler, "/ws").setAllowedOrigins("*");
+        registry.addHandler(customWebSocketController, "/ws").setAllowedOrigins("*");
     }
 }
