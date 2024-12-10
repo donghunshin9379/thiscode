@@ -9,12 +9,14 @@
 - 의존성 [Spring Data JPA, jdbc, Junit, log4j, thymeleaf, Spring Security]
 
 **현재 진행상황**
-- 회원가입 / 로그인 (Spring Secutiry + Maria DB)
-- 친구상태 변경 [요청, 대기, 차단] (Spring Data JPA + Maria DB)
-- 친구목록 (Spring Data JPA + Maria DB)
+- 회원가입 / 로그인 / 로그아웃 (Spring Secutiry + Maria DB)
+- 친구요청 [요청, 대기, 차단] (JPA + Maria DB)
+- 친구목록 리스트업,  (JPA + Maria DB)
+- 온라인 친구 비동기적 표시(WebSocket + JPA + Maria DB)
+  
 
 **목표 기능**
-- 온라인 친구 표시(WebSocket)
+
 - 메세지 (WebSocket)
 - 음성 통화 (WebRTC)
 
