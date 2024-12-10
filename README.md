@@ -15,9 +15,11 @@
 - 온라인 친구 비동기적 표시(WebSocket + JPA + Maria DB)
   
 
-**목표 기능**
+**목표 방향**
 
 - 메세지 (WebSocket)
 - 음성 통화 (WebRTC)
+- 전역 예외처리
+- 
 
 
