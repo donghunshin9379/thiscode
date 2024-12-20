@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class ChatService {
 
     private final ChatRepository chatRepository;
-    private final ChatRoomRepository chatRoomRepository; // ChatRoom 엔티티를 위한 리포지토리 추가 필요
+    private final ChatRoomRepository chatRoomRepository;
 
     public ChatService(ChatRepository chatRepository, ChatRoomRepository chatRoomRepository) {
         this.chatRepository = chatRepository;
