@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "friend_request",
-        uniqueConstraints = @UniqueConstraint(columnNames =
-                {"requester_email", "recipient_email"})) // 유일성 제약 조건 추가
+        uniqueConstraints =
+        @UniqueConstraint(columnNames = {"requester_email", "recipient_email"})) // 유일성 제약 조건 추가
 @Getter
 @Setter
 public class FriendRequest {
@@ -54,14 +54,5 @@ public class FriendRequest {
     public void blockRequest() {
         this.status = FriendStatus.BLOCKED;
         this.createdAt = LocalDateTime.now(); // 수정 시각 업데이트
-    }
-
-    @Override
-    public String toString() {
-        return "FriendRequest{" +
-                "requesterEmail='" + requesterEmail + '\'' +
-                ", recipientEmail='" + recipientEmail + '\'' +
-                ", status=" + status +
-                '}';
     }
 }

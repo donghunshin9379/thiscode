@@ -36,16 +36,14 @@ public class FriendController {
         this.memberService = memberService;
         this.friendListService = friendListService;
     }
-    
+
     // 친구요청 메소드
     @PostMapping("/request")
-    public ResponseEntity<String> sendFriendRequest(@RequestParam(name = "recipientEmail") String recipientEmail,
-                                                    @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<String> sendFriendRequest
+    (@RequestParam(name = "recipientEmail") String recipientEmail,
+     @AuthenticationPrincipal CustomUserDetails userDetails) {
         String requesterEmail = userDetails.getEmail();
         friendRequestService.sendFriendRequest(requesterEmail, recipientEmail);
-        logger.info("요청자 : {}", requesterEmail);
-        logger.info("수신자 : {}", recipientEmail);
-
         return ResponseEntity.ok("친구 요청을 보냈습니다.");
     }
 
@@ -54,14 +52,11 @@ public class FriendController {
     @ResponseBody
     public Map<String, Object> showPendingRequests(@AuthenticationPrincipal CustomUserDetails userDetails) {
         String myEmail = userDetails.getEmail();
-
         List<FriendRequest> sentRequests = friendRequestService.findPendingRequestsSent(myEmail);
         List<FriendRequest> receivedRequests = friendRequestService.findPendingRequestsReceived(myEmail);
-
         Map<String, Object> response = new HashMap<>();
         response.put("sentRequests", sentRequests);
         response.put("receivedRequests", receivedRequests);
-
         return response;
     }
 
@@ -88,20 +83,17 @@ public class FriendController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("차단 요청 에러");
         }
     }
-    
+
     // 친구목록 불러오기
     @GetMapping("/list")
     @ResponseBody
     public ResponseEntity<List<FriendListDTO>> getFriends(@AuthenticationPrincipal CustomUserDetails userDetails) {
         String userEmail = userDetails.getEmail();
-
-        // 요청자 기준으로 친구 목록 가져오기
+        // 요청자 기준
         List<FriendList> myFriendsAsRequester = friendListService.getFriends(userEmail);
-
-        // 수신자 기준으로 친구 목록 가져오기
+        // 수신자 기준
         List<FriendList> myFriendsAsRecipient = friendListService.getFriendsByRecipient(userEmail);
-
-        // 모든 친구 목록 통합
+        // 모든 친구 통합
         List<FriendListDTO> allMyFriends = new ArrayList<>();
 
         // 요청자로서의 친구 목록 처리
@@ -117,11 +109,10 @@ public class FriendController {
         myFriendsAsRecipient.forEach(friendList -> {
             FriendListDTO dto = new FriendListDTO();
             dto.setId(friendList.getId());
-            dto.setUserEmail(friendList.getFriend().getEmail()); // 여기를 변경
-            dto.setFriendEmail(friendList.getUser().getEmail()); // 여기를 변경
+            dto.setUserEmail(friendList.getFriend().getEmail());
+            dto.setFriendEmail(friendList.getUser().getEmail());
             allMyFriends.add(dto);
         });
-
         return ResponseEntity.ok(allMyFriends);
     }
 
@@ -129,11 +120,9 @@ public class FriendController {
     public ResponseEntity<List<String>> getBlockedUsers(Authentication authentication) {
         String userEmail = authentication.getName(); // 현재 인증된 사용자의 이메일을 가져옵니다.
         List<FriendRequest> blockedRequests = friendRequestService.findBlockedEmail(userEmail);
-
         List<String> blockedEmails = blockedRequests.stream()
                 .map(FriendRequest::getRequesterEmail)
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(blockedEmails);
     }
 }

@@ -34,15 +34,16 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/**",
-                                "/login",
-                                "/signup",
-                                "/css/**",
-                                "/js/**",
-                                "/img/**",
-                                "/friends",
-                                "/users/**",
-                                "/api/**").permitAll() // 모든 사용자가 접근 가능
+                                .requestMatchers("/**",
+                                        "/login",
+                                        "/signup",
+                                        "/css/**",
+                                        "/js/**",
+                                        "/img/**",
+                                        "/friends",
+                                        "/users/**",
+                                        "/api/**",
+                                        "/messages/**").permitAll() // 모든 사용자가 접근 가능
                         //.anyRequest().authenticated() // 나머지 요청은 인증된 사용자만 가능
                 )
                 .formLogin(formLogin -> formLogin

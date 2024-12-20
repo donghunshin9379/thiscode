@@ -9,71 +9,101 @@
     <link th:href="@{../css/friends.css}" rel="stylesheet" />
 </head>
 <body>
+<!-- 전체 -->
+<div class="app-container">
 
-<!-- 상단 바 -->
-<div class="navbar">
-    <!-- 왼쪽 탭들 -->
-    <div class="tabs">
-        <div class="tab" id="online-tab">온라인</div>
-        <div class="tab" id="friends-tab">모두</div>
-        <div class="tab" id="pending-tab">대기중</div>
-        <div class="tab" id="blocked-tab">차단목록</div>
-        <div class="tab" id="logout-tab">
-            <a href="javascript:void(0);" onclick="logout()">로그아웃</a>
-        </div>
+    <!-- 좌측 다이렉트 메시지 리스트 -->
+    <div class="direct-messages-sidebar">
+        <h2>다이렉트 메시지</h2>
+        <ul id="direct-messages-list">
+            <!-- 여기에 다이렉트 메시지 리스트 항목들이 들어갑니다 -->
+            <li th:each="chat : ${directMessageChats}">
+                <div class="chat-item" th:onclick="'showChat(\'' + ${chat.friendEmail} + '\')'">
+                    <span th:text="${chat.friendEmail}"></span> <!-- 친구의 이메일만 표시 -->
+                </div>
+            </li>
+        </ul>
     </div>
-    <!-- 오른쪽 친구추가 버튼 -->
-    <div class="add-friend" id="add-friend-btn" onclick="showAddFriendModal()">친구추가</div>
-</div>
 
-<!-- 친구 추가 모달 (숨겨져 있음) -->
-<div id="add-friend-modal" style="display: none;">
-    <input type="email" id="recipient-email" placeholder="이메일 입력" required>
-    <button id="send-request-btn" onclick="sendFriendRequest()">친구 요청 보내기</button>
-</div>
+    <!-- 메인 콘텐츠 -->
+    <div class="main-content">
+        <!-- 상단 바 -->
+        <div class="navbar">
+            <!-- 왼쪽 탭들 -->
+            <div class="tabs">
+                <div class="tab" id="online-tab">온라인</div>
+                <div class="tab" id="friends-tab">모두</div>
+                <div class="tab" id="pending-tab">대기중</div>
+                <div class="tab" id="blocked-tab">차단목록</div>
+                <div class="tab" id="logout-tab">
+                    <a href="javascript:void(0);" onclick="logout()">로그아웃</a>
+                </div>
+            </div>
+            <!-- 오른쪽 친구추가 버튼 -->
+            <div class="add-friend" id="add-friend-btn" onclick="showAddFriendModal()">친구추가</div>
+        </div>
 
-<!-- 대기중인 친구 요청 -->
-<div class="pending-section" id="pending-section" style="display: none;">
-    <h2>대기 중</h2>
 
-    <h3>보낸 요청</h3>
-    <ul id="sent-requests"></ul>
+        <!-- 채팅창 영역 (상단바 아래로 이동) -->
+        <div class="chat-section" id="chat-window" style="display: none;">
+            <h3 id="chat-friend-email"></h3>
+            <div id="chat-messages"></div>
+            <div class="message-input-container">
+                <input type="text" id="message-content" placeholder="메시지를 입력하세요" onkeydown="checkEnter(event)">
+                <button onclick="sendMessage()">전송</button>
+            </div>
+        </div>
 
-    <h3>받은 요청</h3>
-    <ul id="received-requests"></ul>
-</div>
 
-<!-- 모든 친구 목록 -->
-<div class="friends-section" id="all-friends-section" style="display: none;">
-    <h2>모든 친구</h2>
-    <input type="text" id="search-input" placeholder="검색하기">
-    <ul id="friends-list"></ul>
-</div>
+        <!-- 친구 추가 모달 (숨겨져 있음) -->
+        <div id="add-friend-modal" style="display: none;">
+            <input type="email" id="recipient-email" placeholder="이메일 입력" required>
+            <button id="send-request-btn" onclick="sendFriendRequest()">친구 요청 보내기</button>
+        </div>
 
-<!-- 차단 목록 -->
-<div class="blocked-section" id="blocked-section" style="display: none;">
-    <h2>차단 목록</h2>
-    <ul id="block-list">
-        <li th:each="blocked : ${blockedUsers}">
-            <span th:text="${blocked.email}"></span>
-            <form th:action="@{/friends/unblock}" method="post" style="display:inline;">
-                <input type="hidden" th:value="${blocked.email}" name="email"/>
-                <button type="submit">차단 해제</button>
-            </form>
-        </li>
-    </ul>
-</div>
+        <!-- 대기중인 친구 요청 -->
+        <div class="pending-section" id="pending-section" style="display: none;">
+            <h3>보낸 요청</h3>
+            <ul id="sent-requests"></ul>
 
-<!-- 온라인 친구 목록-->
-<div class="online-section" id="online-section" style="display: none;">
-    <h2>온라인</h2>
-    <ul id="onlineUsersList"></ul>
-</div>
+            <h3>받은 요청</h3>
+            <ul id="received-requests"></ul>
+        </div>
+
+        <!-- 모든 친구 목록 -->
+        <div class="friends-section" id="all-friends-section">
+            <input type="text" id="search-input" placeholder="검색하기">
+            <ul id="friends-list"></ul>
+        </div>
+
+        <!-- 차단 목록 -->
+        <div class="blocked-section" id="blocked-section" style="display: none;">
+            <h2>차단 목록</h2>
+            <ul id="block-list">
+                <li th:each="blocked : ${blockedUsers}">
+                    <span th:text="${blocked.email}"></span>
+                    <form th:action="@{/friends/unblock}" method="post" style="display:inline;">
+                        <input type="hidden" th:value="${blocked.email}" name="email"/>
+                        <button type="submit">차단 해제</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 온라인 친구 목록-->
+        <div class="online-section" id="online-section">
+            <h2>온라인 친구 목록</h2>
+            <ul id="onlineUsersList"></ul>
+        </div>
+
+    </div> <!-- main-content 끝 -->
+
+</div> <!-- app-container 끝 -->
 
 <!-- 자바스크립트 -->
 <script th:src="@{/js/web-socket.js}"></script>
 <script th:src="@{/js/friends.js}"></script>
-
+<script th:src="@{/js/chat.js}"></script>
 
 </body>
 </html>

@@ -5,7 +5,6 @@ import com.example.thiscode.repository.FriendListRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -19,17 +18,17 @@ public class FriendListService {
         this.friendListRepository = friendListRepository;
     }
 
-    // 특정 사용자의 친구 목록 가져오기 (요청자 기준)
+    // 내 친구 목록 조회 (요청자 기준)
     public List<FriendList> getFriends(String userEmail) {
         return friendListRepository.findByUserEmail(userEmail);
     }
 
-    // 특정 사용자의 친구 목록 가져오기 (수신자 기준)
+    // 친구의 목록중 나 조회 (수신자 기준)
     public List<FriendList> getFriendsByRecipient(String userEmail) {
         return friendListRepository.findByFriendEmail(userEmail);
     }
 
-    // 특정 사용자의 모든 친구 목록 가져오기
+    // 내 친구 목록 이메일 조회
     public Set<String> getAllFriendEmails(String userEmail) {
         return friendListRepository.findAllFriendEmailsByUserEmail(userEmail);
     }

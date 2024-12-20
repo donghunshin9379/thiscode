@@ -17,9 +17,8 @@ import java.util.Map;
 @Controller
 public class SignupController {
 
-    private static final Logger logger = LoggerFactory.getLogger(SignupController.class);
-
     private final MemberService memberService;
+    private static final Logger logger = LoggerFactory.getLogger(SignupController.class);
 
     public SignupController(MemberService memberService) {
         this.memberService = memberService;
@@ -42,16 +41,11 @@ public class SignupController {
     }
 
     // 이메일 중복
-    @GetMapping("/check-email")                              //requestParam 매핑 명시적으로해야함
+    @GetMapping("/check-email")
     public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestParam("email") String email) {
         boolean exists = memberService.existsByEmail(email); // 이메일 중복 체크
         Map<String, Boolean> response = new HashMap<>();
         response.put("exists", exists);
         return ResponseEntity.ok(response);
     }
-
-
-
-
-
 }

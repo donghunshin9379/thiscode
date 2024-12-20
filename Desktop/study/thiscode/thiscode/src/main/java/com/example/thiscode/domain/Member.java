@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDate;
 
-// DB 엔티티용
+// DB 저장 Entity
 @Entity 
 @Getter
 @Setter

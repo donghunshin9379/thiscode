@@ -56,12 +56,4 @@ public class FriendList {
     public int hashCode() {
         return Objects.hash(user.getEmail(), friend.getEmail());
     }
-
-    @Override
-    public String toString() {
-        return "FriendList{" +
-                "user=" + (user != null ? user.getEmail() : "null") +
-                ", friend=" + (friend != null ? friend.getEmail() : "null") +
-                '}';
-    }
 }

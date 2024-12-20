@@ -8,12 +8,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/online")
 public class OnlineController {
-
     private final WebSocketService webSocketService;
 
     @Autowired
     public OnlineController(WebSocketService webSocketService) {
         this.webSocketService = webSocketService;
     }
-
 }

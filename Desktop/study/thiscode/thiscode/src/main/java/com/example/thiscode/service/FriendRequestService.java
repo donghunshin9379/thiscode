@@ -51,7 +51,7 @@ public class FriendRequestService {
             throw new IllegalStateException("해당 유저가 이미 요청을 보냈습니다.");
         }
 
-        // 요청자와 수신자가 이미 ACCEPTED 상태로 친구인지 확인
+        // 요청자와 수신자가 이미 ACCEPTED 상태 인지 확인
         List<FriendRequest> existingAcceptedFriend = friendRequestRepository
                 .findByRequesterEmailAndRecipientEmailAndStatus(requesterEmail, recipientEmail, FriendStatus.ACCEPTED);
 
@@ -73,31 +73,21 @@ public class FriendRequestService {
     public List<FriendRequest> findPendingRequestsReceived(String recipientEmail) {
         return friendRequestRepository.findByRecipientEmailAndStatus(recipientEmail, FriendStatus.PENDING);
     }
-    
-    
+
     // 친구요청 수락
     @Transactional
     public void acceptFriendRequest(Long requestId) {
-        // 친구 요청 조회
         FriendRequest request = friendRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalStateException("수락할 친구 요청이 없습니다."));
-
-        // 친구 요청 수락
         request.acceptRequest();
         friendRequestRepository.save(request); // 친구 요청 상태 저장
-
-        // 친구 목록에 추가
         FriendList friendList = new FriendList();
-
-        // 요청자의 Member 객체를 가져옵니다.
+        // 요청자의 Member 객체
         Member requester = memberService.findByEmail(request.getRequesterEmail());
-        // 수신자의 Member 객체를 가져옵니다.
+        // 수신자의 Member 객체
         Member recipient = memberService.findByEmail(request.getRecipientEmail());
-
-        // user와 friend 필드 설정
         friendList.setUser(requester);  // 요청자
         friendList.setFriend(recipient); // 수신자
-
         friendListRepository.save(friendList); // 친구 목록 저장
     }
 
@@ -106,9 +96,8 @@ public class FriendRequestService {
     public void blockFriendRequest(Long requestId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalStateException("차단할 친구 요청이 없습니다."));
-
-        request.blockRequest(); // 요청을 차단 상태로 변경
-        friendRequestRepository.save(request); // 변경 사항 저장
+        request.blockRequest();
+        friendRequestRepository.save(request);
     }
 
     // 차단한 요청자 조회(이메일)

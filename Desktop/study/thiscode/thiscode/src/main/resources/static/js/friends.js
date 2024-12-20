@@ -179,33 +179,32 @@ function blockRequest(requestId) {
 }
 
 
-// 친구 목록 가져오기
+// 모두 (친구목록)탭 GET
 function fetchFriends() {
-    fetch('/friends/list', { // 친구 목록 요청
+    fetch('/friends/list', {
         method: 'GET',
         headers: {
-            [csrfHeader]: csrfToken // CSRF 토큰 추가
+            [csrfHeader]: csrfToken
         }
     })
     .then(response => {
         if (!response.ok) {
             throw new Error('친구 목록을 가져오는 데 실패했습니다.'); // 사용자 친화적인 오류 메시지
         }
-        return response.json(); // JSON 데이터를 반환받음
+        return response.json();
     })
     .then(data => {
-        displayFriends(data); // 친구 목록을 표시 함수 호출
+        displayFriends(data);
     })
     .catch(error => {
-        console.error('Error fetching friends:', error);
-        alert(error.message); // 사용자에게 오류 메시지 표시
+        alert(error.message);
     });
 }
 
-// 친구 목록을 표시하는 함수
+// GET 한 친구목록 표시 (파라미터 DTO객체 )
 function displayFriends(friends) {
     const friendsList = document.getElementById('friends-list');
-    friendsList.innerHTML = ''; // 기존 내용 초기화
+    friendsList.innerHTML = '';
 
     if (friends.length === 0) {
         friendsList.innerHTML = '<li>친구가 없습니다.</li>';
@@ -216,9 +215,8 @@ function displayFriends(friends) {
         const li = document.createElement('li');
         li.classList.add('friend-item');
         li.innerHTML = `
-            <div class="friend-bar">
-                <span class="friend-email">${friend.friendEmail}</span>
-                <button class="message-button" onclick="sendMessage('${friend.friendEmail}')">Message</button>
+            <div class="friend-bar" onclick="loadChatUI('${friend.friendEmail}')">
+              <span class="friend-email">${friend.friendEmail}</span>
             </div>
         `;
         friendsList.appendChild(li);
@@ -228,6 +226,7 @@ function displayFriends(friends) {
     const searchTerm = document.getElementById("search-input").value.toLowerCase();
     filterFriends(searchTerm);
 }
+
 
 // 친구 검색 이벤트
 document.getElementById("search-input").addEventListener("input", function() {
@@ -297,11 +296,10 @@ function loadBlockedUsers() {
         .catch(error => console.error('Error:', error));
 }
 
-// 온라인 탭
+// 온라인 탭 (to 서버 CustomWebSocketController)
 function fetchOnlineFriends() {
-    socket.send(JSON.stringify({ type: "requestOnlineFriends" }));
+    socket.send(JSON.stringify({ type: "onlineFriends" }));
 }
-
 
 // 상단 탭 설정
 document.addEventListener("DOMContentLoaded", function() {
@@ -312,12 +310,12 @@ document.addEventListener("DOMContentLoaded", function() {
         tab.addEventListener('click', function() {
             const activeTabId = this.id;
             console.log("클릭된 탭 ID:", activeTabId);
-            handleTabClick(activeTabId);
+            hideAllSections(); // 모든 섹션 숨기기
+            handleTabClick(activeTabId); // 선택한 탭에 해당하는 섹션 표시
+            document.getElementById('chat-window').style.display = 'none'; // 채팅창 숨김
         });
     });
 });
-
-
 
 // 탭 클릭 처리 함수
 function handleTabClick(activeTabId) {
@@ -339,8 +337,8 @@ function handleTabClick(activeTabId) {
         case 'online-tab':
             // 온라인 친구 목록이 이미 로드되었는지 확인
             if (document.getElementById('onlineUsersList').childElementCount === 0) {
-                // 온라인 친구 목록이 비어있으면 서버에서 가져오기
-                fetchOnlineFriends(); // 이 함수는 서버에서 온라인 친구 목록을 가져오는 역할
+                // 온라인 친구 목록이 비어있으면
+                fetchOnlineFriends(); //서버에서 온라인 친구 목록을 가져오는 역할
             }
             document.getElementById('online-section').style.display = 'block';
             break;
@@ -349,12 +347,19 @@ function handleTabClick(activeTabId) {
     }
 }
 
-
+// 특정 섹션 표시하기
+function showSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.style.display = 'block';  // 해당 섹션을 보이게 함
+    }
+}
 
 // 모든 섹션 숨기는 함수
 function hideAllSections() {
-    document.querySelectorAll('.pending-section, .friends-section, .blocked-section, .online-section')
+    document.querySelectorAll('.pending-section, .friends-section, .blocked-section, .online-section, #chat-window')
         .forEach(section => {
             section.style.display = 'none';
         });
 }
+
