@@ -33,8 +33,10 @@ public class Message {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(name = "is_read", nullable = false)
-    private boolean isRead = false;
+//    @Column(name = "is_read", nullable = false)
+//    private boolean isRead = false;
+    @Column(name = "is_read", nullable = false, columnDefinition = "TINYINT(1)")
+    private Boolean isRead = false;
 
     public Message(Long roomId, String senderEmail, String receiverEmail, String content) {
         this.roomId = roomId;

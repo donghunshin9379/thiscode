@@ -19,4 +19,17 @@ public interface ChatRepository extends JpaRepository<Message, Long> {
     @Query(value = "INSERT INTO messages (room_id, sender_id, content, created_at, is_read) VALUES :messages", nativeQuery = true)
     void batchInsert(@Param("messages") List<Object[]> messages);
 
+    //DM 리스트 (채팅내역존재) 목록
+    @Query("SELECT DISTINCT CASE " +
+            "WHEN m.senderEmail = :userEmail THEN m.receiverEmail " +
+            "ELSE m.senderEmail END " +
+            "FROM Message m " +
+            "WHERE (m.senderEmail = :userEmail OR m.receiverEmail = :userEmail) " +
+            "AND m.content IS NOT NULL AND m.content <> ''")
+    List<String> findDistinctFriendsWithContent(@Param("userEmail") String userEmail);
+
+    @Query("SELECT m FROM Message m WHERE m.receiverEmail = :userEmail AND m.roomId = :roomId AND m.isRead = false")
+    List<Message> findUnreadMessages(@Param("userEmail") String userEmail, @Param("roomId") Long roomId);
+
+
 }

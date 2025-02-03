@@ -1,5 +1,6 @@
 package com.example.thiscode.service;
 
+import com.example.thiscode.domain.Message;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,6 +130,42 @@ public class WebSocketService {
         }
         userOnlineFriends.remove(email);
     }
+
+
+    // 읽음 상태 전송
+    public void sendReadStatusUpdate(Message message) {
+        String senderEmail = message.getSenderEmail();
+        String receiverEmail = message.getReceiverEmail();
+
+        WebSocketSession senderSession = findSessionByEmail(senderEmail);
+        WebSocketSession receiverSession = findSessionByEmail(receiverEmail);
+
+        JSONObject payload = new JSONObject()
+                .put("type", "readStatusUpdate")
+                .put("payload", new JSONObject()
+                        .put("messageId", message.getId())
+                        .put("isRead", true));
+
+        if (senderSession != null && senderSession.isOpen()) {
+            sendMessage(senderSession, payload);
+        }
+
+        if (receiverSession != null && receiverSession.isOpen()) {
+            sendMessage(receiverSession, payload);
+        }
+    }
+
+    private void sendMessage(WebSocketSession session, JSONObject payload) {
+        try {
+            logger.info("읽음 상태 업데이트 전송 완료: {}", payload);
+            session.sendMessage(new TextMessage(payload.toString()));
+        } catch (IOException e) {
+            logger.error("읽음 상태 업데이트 전송 실패: {}", e.getMessage());
+        }
+    }
+
+
+
 
 }
 

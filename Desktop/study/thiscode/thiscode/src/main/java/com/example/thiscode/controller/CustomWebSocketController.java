@@ -1,5 +1,6 @@
 package com.example.thiscode.controller;
 
+import com.example.thiscode.domain.ChatSessionManager;
 import com.example.thiscode.domain.Message;
 import com.example.thiscode.service.ChatService;
 import com.example.thiscode.service.WebSocketService;
@@ -24,10 +25,12 @@ public class CustomWebSocketController extends TextWebSocketHandler {
     private final WebSocketService webSocketService;
     private final ChatService chatService;
     private static final Logger logger = LoggerFactory.getLogger(CustomWebSocketController.class);
+    private final ChatSessionManager chatSessionManager;
 
-    public CustomWebSocketController(WebSocketService webSocketService, ChatService chatService) {
+    public CustomWebSocketController(WebSocketService webSocketService, ChatService chatService, ChatSessionManager chatSessionManager) {
         this.webSocketService = webSocketService;
         this.chatService = chatService;
+        this.chatSessionManager = chatSessionManager;
     }
 
     //소켓 생성후 온라인 유저 요청(탭X)
@@ -68,6 +71,11 @@ public class CustomWebSocketController extends TextWebSocketHandler {
                 case "sendMessage":
                     sendMessage(jsonObject, session);
                     break;
+                case "enterRoom" :
+                    enterRoom(jsonObject, session);
+                    break;
+                case "leaveRoom" :
+                    leaveRoom(jsonObject, session);
                 default:
                     logger.warn("알 수 없는 메시지 타입: {}", jsonObject.getString("type"));
             }
@@ -142,7 +150,9 @@ public class CustomWebSocketController extends TextWebSocketHandler {
                         .put("senderEmail", message.getSenderEmail())
                         .put("content", message.getContent()));
 
-        // 친구의 세션을 찾습니다.
+        // 수신자가 채팅방에 있는지 확인
+        isFriendInRoom(message, receiverEmail, message.getRoomId());
+        // 친구의 세션을 찾기
         WebSocketSession friendSession = webSocketService.findSessionByEmail(receiverEmail);
 
         if (friendSession != null) {
@@ -157,6 +167,37 @@ public class CustomWebSocketController extends TextWebSocketHandler {
             logger.warn("수신자 {}는 오프라인입니다. 메시지는 이미 데이터베이스에 저장되어 있습니다.", receiverEmail);
         }
     }
+
+    private void enterRoom(JSONObject jsonObject, WebSocketSession session) throws JSONException {
+        Long roomId = jsonObject.getLong("roomId");
+        String userEmail = (String) session.getAttributes().get("email");
+        //유저 채팅방 위치 유지 및 확인 (실시간 빌드업)
+        chatSessionManager.setUserRoom(userEmail, roomId);
+
+        //입장시 안 읽은 메세지 읽음처리로직
+        chatService.markMessagesAsRead(userEmail, roomId);
+    }
+
+    private void leaveRoom(JSONObject jsonObject, WebSocketSession session) throws JSONException {
+        Long roomId = jsonObject.getLong("roomId");
+        String userEmail = (String) session.getAttributes().get("email");
+        logger.info("WebSocketController leaveRoom - roomId : {}", roomId);
+        logger.info("WebSocketController leaveRoom - userEmail : {}", userEmail);
+
+        // 유저를 채팅방에서 제거
+        chatSessionManager.removeUserRoom(userEmail, roomId);
+    }
+
+
+    private void isFriendInRoom(Message message, String receiverEmail, Long roomId) {
+        boolean isReceiverInRoom = chatSessionManager.isUserInRoom(receiverEmail, roomId);
+        // 상대가 채팅방에 있는경우
+        if (isReceiverInRoom) {
+            chatService.updateMessageReadStatus(message);
+            webSocketService.sendReadStatusUpdate(message);
+        }
+    }
+
 
 
     @Override
