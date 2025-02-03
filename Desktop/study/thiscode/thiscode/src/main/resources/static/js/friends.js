@@ -298,52 +298,67 @@ function loadBlockedUsers() {
 
 // 온라인 탭 (to 서버 CustomWebSocketController)
 function fetchOnlineFriends() {
-    socket.send(JSON.stringify({ type: "onlineFriends" }));
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "onlineFriends" }));
+    } else {
+        console.warn("WebSocket 연결이 아직 열리지 않았습니다. 연결을 기다립니다.");
+        setTimeout(fetchOnlineFriends, 100); // 100ms 후에 다시 시도
+    }
 }
+// 활성화 탭 추적 변수
+let activeTabId = '';
+let currentUserEmail;
 
 // 상단 탭 설정
 document.addEventListener("DOMContentLoaded", function() {
+    initializeFriendList();
     hideAllSections(); // 모든 섹션 숨기기
 
     // 탭 클릭 이벤트 설정
     document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', function() {
-            const activeTabId = this.id;
+            activeTabId = this.id;  // 'const' 대신 'let' 사용
             console.log("클릭된 탭 ID:", activeTabId);
             hideAllSections(); // 모든 섹션 숨기기
             handleTabClick(activeTabId); // 선택한 탭에 해당하는 섹션 표시
             document.getElementById('chat-window').style.display = 'none'; // 채팅창 숨김
         });
-    });
-});
+            });
+        });
+
+function initializeFriendList() {
+    // 기본적으로 온라인 탭을 활성화한 것처럼 동작
+    handleTabClick('online-tab');
+}
 
 // 탭 클릭 처리 함수
-function handleTabClick(activeTabId) {
+function handleTabClick(tabId) {
+    activeTabId = tabId;
     hideAllSections();
 
-    switch (activeTabId) {
+    switch (tabId) {
         case 'pending-tab':
             fetchPendingRequests();
-            document.getElementById('pending-section').style.display = 'block';
+            showSection('pending-section');
+            closeChatUI();
             break;
         case 'friends-tab':
             fetchFriends();
-            document.getElementById('all-friends-section').style.display = "block";
+            showSection('all-friends-section');
+            closeChatUI();
             break;
         case 'blocked-tab':
             loadBlockedUsers();
-            document.getElementById('blocked-section').style.display = 'block';
+            showSection('blocked-section');
+            closeChatUI();
             break;
         case 'online-tab':
-            // 온라인 친구 목록이 이미 로드되었는지 확인
-            if (document.getElementById('onlineUsersList').childElementCount === 0) {
-                // 온라인 친구 목록이 비어있으면
-                fetchOnlineFriends(); //서버에서 온라인 친구 목록을 가져오는 역할
-            }
-            document.getElementById('online-section').style.display = 'block';
+            fetchOnlineFriends();
+            showSection('online-section');
+            closeChatUI();
             break;
         default:
-            console.warn("알 수 없는 탭 ID:", activeTabId);
+            console.warn("알 수 없는 탭 ID:", tabId);
     }
 }
 
@@ -362,4 +377,59 @@ function hideAllSections() {
             section.style.display = 'none';
         });
 }
+
+// 채팅 UI를 닫는 함수
+function closeChatUI() {
+    console.log("closeChatUI() 실행#######");
+    if (currentRoomId) {
+        leaveRoom(currentRoomId);
+    }
+    isChatUIActive = false;
+    currentChatPartner = null;
+    currentRoomId = null;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/chat/dm-list')
+        .then(response => response.json())
+        .then(chatFriends => {
+            const chatList = document.getElementById('direct-messages-list');
+            chatFriends.forEach(friendEmail => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="chat-item" onclick="loadChatUI('${friendEmail}')">
+                        <span>${friendEmail}</span>
+                    </div>
+                `;
+                chatList.appendChild(li);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+});
+
+//// 채팅 읽음 로직
+//
+//// 채팅방 마지막메세지 추출 (roomId로 해당 채팅방 마지막 메세지 추출)
+//function getLastReadMessageId(roomId) {
+//    fetch(`/chat/last?roomId=${encodeURIComponent(roomId)}`, {
+//        method: 'GET', // GET 요청으로 변경
+//        headers: {
+//            'Content-Type': 'application/json',
+//        }
+//    })
+//    .then(response => {
+//        if (!response.ok) {
+//            throw new Error('Network response was not ok');
+//        }
+//        return response.json();
+//    })
+//    .then(lastReadMessageId => {
+//        console.log("LastReadMesageID : ", lastReadMessageId);
+//    })
+//    .catch(error => {
+//        console.error('getLastReadMessageId 요청 중 오류 발생:', error);
+//    });
+//}
+//
+//
 

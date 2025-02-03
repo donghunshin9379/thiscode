@@ -1,6 +1,8 @@
 let currentChatPartner;
+let isChatUIActive = false;
 // 채팅 UI 로드
 function loadChatUI(friendEmail) {
+    isChatUIActive = true;
     hideAllSections();
     showSection('chat-window');
 
@@ -12,8 +14,9 @@ function loadChatUI(friendEmail) {
     // 현재 채팅 상대 설정
     currentChatPartner = friendEmail;
 }
-
- //채팅내역 로드
+// 채팅방 ID 전역변수
+let currentRoomId = null;
+//채팅내역 로드
 function loadChatHistory(friendEmail) {
     fetch(`/chat/history?friendEmail=${encodeURIComponent(friendEmail)}`)
         .then(response => {
@@ -36,6 +39,11 @@ function loadChatHistory(friendEmail) {
             messages.forEach(message => {
                 displayChatMessage(message.senderEmail, message.content, data.currentUserEmail);
             });
+            console.log("##서버 ROOM ID : {}", data.roomId);
+            // 변수 값 저장
+            currentRoomId = data.roomId;
+
+            enterRoom(currentRoomId);
         })
         .catch(error => {
             console.error('채팅 기록 로드 실패:', error);
@@ -86,3 +94,24 @@ function loadChatHistory(friendEmail) {
       chatMessages.appendChild(messageElement);
       chatMessages.scrollTop = chatMessages.scrollHeight;
   }
+
+
+// 읽음처리 위한 채팅방 입장, 퇴장
+//입장(웹소켓)
+function enterRoom(roomId) {
+        console.log("enterRoom 실행 ########### : ", roomId);
+        socket.send(JSON.stringify({
+            type: 'enterRoom',
+            roomId: roomId
+        }));
+}
+
+
+// 퇴장
+function leaveRoom(roomId) {
+    console.log("leaveRoom 실행 ########### : ", roomId);
+    socket.send(JSON.stringify({
+        type: 'leaveRoom',
+        roomId: roomId
+    }));
+}

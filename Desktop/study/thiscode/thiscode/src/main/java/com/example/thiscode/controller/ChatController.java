@@ -37,6 +37,7 @@ public class ChatController {
         Map<String, Object> response = new HashMap<>();
         response.put("currentUserEmail", currentUserEmail);
         response.put("messages", messages);
+        response.put("roomId", roomId);
         return ResponseEntity.ok(response);
     }
 
@@ -48,4 +49,13 @@ public class ChatController {
         chatService.saveMessage(roomId, senderEmail, messageRequest.getReceiverEmail(), messageRequest.getContent());
         return ResponseEntity.ok(savedMessage);
     }
+
+    @GetMapping("/dm-list")
+    public ResponseEntity<List<String>> getChatFriends(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        String userEmail = userDetails.getUsername();
+        List<String> chatFriends = chatService.getChatFriendsList(userEmail);
+        logger.info("ChatController 본인 : {}",userEmail);
+        return ResponseEntity.ok(chatFriends);
+    }
+
 }
