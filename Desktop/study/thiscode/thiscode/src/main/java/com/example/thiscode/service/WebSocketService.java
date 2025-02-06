@@ -131,40 +131,25 @@ public class WebSocketService {
         userOnlineFriends.remove(email);
     }
 
-
-    // 읽음 상태 전송
+    // 입장 읽음 상태 업데이트를 알리는 메서드(발신자에게)
     public void sendReadStatusUpdate(Message message) {
-        String senderEmail = message.getSenderEmail();
-        String receiverEmail = message.getReceiverEmail();
-
-        WebSocketSession senderSession = findSessionByEmail(senderEmail);
-        WebSocketSession receiverSession = findSessionByEmail(receiverEmail);
-
-        JSONObject payload = new JSONObject()
-                .put("type", "readStatusUpdate")
-                .put("payload", new JSONObject()
-                        .put("messageId", message.getId())
-                        .put("isRead", true));
-
+        // 발신자의 세션을 찾습니다.
+        WebSocketSession senderSession = findSessionByEmail(message.getSenderEmail());
         if (senderSession != null && senderSession.isOpen()) {
-            sendMessage(senderSession, payload);
-        }
+            JSONObject payload = new JSONObject()
+                    .put("type", "readStatusUpdate")
+                    .put("payload", new JSONObject()
+                            .put("messageId", message.getId())
+                            .put("isRead", true));
 
-        if (receiverSession != null && receiverSession.isOpen()) {
-            sendMessage(receiverSession, payload);
-        }
-    }
-
-    private void sendMessage(WebSocketSession session, JSONObject payload) {
-        try {
-            logger.info("읽음 상태 업데이트 전송 완료: {}", payload);
-            session.sendMessage(new TextMessage(payload.toString()));
-        } catch (IOException e) {
-            logger.error("읽음 상태 업데이트 전송 실패: {}", e.getMessage());
+            try {
+                senderSession.sendMessage(new TextMessage(payload.toString()));
+                logger.info("발신자에게 읽음 상태 업데이트: {}", payload.toString());
+            } catch (IOException e) {
+                logger.error("발신자에게 읽음 상태 업데이트 전송 실패: {}", e.getMessage());
+            }
         }
     }
-
-
 
 
 }

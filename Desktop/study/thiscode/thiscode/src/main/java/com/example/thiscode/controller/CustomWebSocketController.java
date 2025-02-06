@@ -76,6 +76,7 @@ public class CustomWebSocketController extends TextWebSocketHandler {
                     break;
                 case "leaveRoom" :
                     leaveRoom(jsonObject, session);
+                    break;
                 default:
                     logger.warn("알 수 없는 메시지 타입: {}", jsonObject.getString("type"));
             }
@@ -125,35 +126,73 @@ public class CustomWebSocketController extends TextWebSocketHandler {
     }
 
 
-    private void sendMessage(JSONObject jsonObject, WebSocketSession session) throws JSONException {
-        JSONObject payload = jsonObject.getJSONObject("payload");
-        String receiverEmail = payload.getString("receiverEmail");
-        String content = payload.getString("content");
+//    private void sendMessage(JSONObject jsonObject, WebSocketSession session) throws JSONException {
+//        JSONObject payload = jsonObject.getJSONObject("payload");
+//        String receiverEmail = payload.getString("receiverEmail");
+//        String content = payload.getString("content");
+//
+//
+//        Principal principal = session.getPrincipal();
+//        String senderEmail = principal.getName();
+//
+//        // 메시지 저장
+//        Long roomId = chatService.getChatRoomId(senderEmail, receiverEmail);
+//        Message savedMessage = chatService.saveMessage(roomId, senderEmail, receiverEmail, content);
+//
+//        //친구에게 메시지 전송
+//        sendChatMessageToFriend(savedMessage, receiverEmail);
+//    }
+private void sendMessage(JSONObject jsonObject, WebSocketSession session) throws JSONException {
+    JSONObject payload = jsonObject.getJSONObject("payload");
+    String receiverEmail = payload.getString("receiverEmail");
+    String content = payload.getString("content");
 
+    Principal principal = session.getPrincipal();
+    String senderEmail = principal.getName();
 
-        Principal principal = session.getPrincipal();
-        String senderEmail = principal.getName();
+    // 메시지 저장
+    Long roomId = chatService.getChatRoomId(senderEmail, receiverEmail);
+    Message savedMessage = chatService.saveMessage(roomId, senderEmail, receiverEmail, content);
 
-        // 메시지 저장
-        Long roomId = chatService.getChatRoomId(senderEmail, receiverEmail);
-        Message savedMessage = chatService.saveMessage(roomId, senderEmail, receiverEmail, content);
+    // 친구에게 메시지 전송 및 읽음 상태 확인
+    boolean isRead = sendChatMessageToFriend(savedMessage, receiverEmail);
 
-        //친구에게 메시지 전송
-        sendChatMessageToFriend(savedMessage, receiverEmail);
+    // 클라이언트에게 응답 전송
+    JSONObject response = new JSONObject()
+            .put("type", "messageSent")
+            .put("payload", new JSONObject()
+                    .put("messageId", savedMessage.getId())
+                    .put("isRead", isRead)
+                    .put("content", content));
+
+    try {
+
+        session.sendMessage(new TextMessage(response.toString()));
+    } catch (IOException e) {
+        logger.error("응답 메시지 전송 오류: {}", senderEmail, e);
     }
+}
 
-    private void sendChatMessageToFriend(Message message, String receiverEmail) {
+    // 메시지 전송 및 읽음 상태 업데이트
+    private boolean sendChatMessageToFriend(Message message, String receiverEmail) {
         logger.info("웹소켓 컨트롤러 sendChatMessageToFriend 실행");
         JSONObject payload = new JSONObject()
-                .put("type", "chatMessage")
+                .put("type", "displayMessage")
                 .put("payload", new JSONObject()
                         .put("senderEmail", message.getSenderEmail())
                         .put("content", message.getContent()));
 
-        // 수신자가 채팅방에 있는지 확인
-        isFriendInRoom(message, receiverEmail, message.getRoomId());
+        logger.info("sendChatMessageToFriend sender 이메일값 : {}", message.getSenderEmail());
         // 친구의 세션을 찾기
         WebSocketSession friendSession = webSocketService.findSessionByEmail(receiverEmail);
+        boolean isRead = false;
+
+        // 수신자가 채팅방에 있는지 확인 후 읽음 상태 저장 및 브로드캐스트
+        if (friendSession != null && isFriendInRoom(receiverEmail, message.getRoomId(), message)) {
+            chatService.updateMessageReadStatus(message);  // 읽음 상태 업데이트
+            broadcastReadStatusUpdateToSession(message.getId(), true, friendSession);  // 읽음 상태 브로드캐스트
+            isRead = true;
+        }
 
         if (friendSession != null) {
             // 친구의 세션이 존재하면 메시지를 전송합니다.
@@ -164,9 +203,112 @@ public class CustomWebSocketController extends TextWebSocketHandler {
                 logger.error("메시지 전송 오류: {}", receiverEmail, e);
             }
         } else {
-            logger.warn("수신자 {}는 오프라인입니다. 메시지는 이미 데이터베이스에 저장되어 있습니다.", receiverEmail);
+            logger.warn("수신자 {} 세션 존재 X.", receiverEmail);
+
+        }
+
+        return isRead;
+    }
+
+    // 유저 채팅방 입장 여부 확인 (boolean 리턴)
+    private boolean isFriendInRoom(String receiverEmail, Long roomId, Message message) {
+        boolean isReceiverInRoom = chatSessionManager.isUserInRoom(receiverEmail, roomId);
+        if (!isReceiverInRoom) {
+            logger.warn("수신자가 채팅방에 있지 않습니다: {}", receiverEmail);
+            // 수신자가 채팅방이 아닌 경우 알림 전송
+            sendNotification(receiverEmail, message);
+        }
+        return isReceiverInRoom;
+    }
+
+    // 알림 전송 메소드
+    private void sendNotification(String receiverEmail, Message message) {
+        JSONObject notificationPayload = new JSONObject()
+                .put("type", "notification")
+                .put("payload", new JSONObject()
+                        .put("messageId", message.getId())
+                        .put("senderEmail", message.getSenderEmail())
+                        .put("content", message.getContent()));
+
+
+        // 친구의 세션을 찾기
+        WebSocketSession friendSession = webSocketService.findSessionByEmail(receiverEmail);
+
+        if (friendSession != null) {
+            try {
+                friendSession.sendMessage(new TextMessage(notificationPayload.toString()));
+                logger.info("알림 전송 완료 - 수신자: {}", receiverEmail);
+                logger.info("알림 완료 발신자 : {}", message.getSenderEmail());
+            } catch (IOException e) {
+                logger.error("알림 전송 오류: {}", receiverEmail, e);
+            }
+        } else {
+            logger.warn("수신자 {} 세션 존재 X.", receiverEmail);
         }
     }
+
+
+
+
+    // 특정 세션에 읽음 상태 업데이트 브로드캐스트
+    private void broadcastReadStatusUpdateToSession(Long messageId, boolean isRead, WebSocketSession session) {
+        JSONObject payload = new JSONObject()
+                .put("type", "readStatusUpdate")
+                .put("payload", new JSONObject()
+                        .put("messageId", messageId)
+                        .put("isRead", isRead));
+
+        if (session.isOpen()) {
+            try {
+                session.sendMessage(new TextMessage(payload.toString()));
+            } catch (IOException e) {
+                logger.error("읽음 상태 업데이트 전송 실패: {}", e.getMessage());
+            }
+        }
+    }
+
+//    //메시지 전송 및 읽음 상태 업데이트
+//    private void sendChatMessageToFriend(Message message, String receiverEmail) {
+//        logger.info("웹소켓 컨트롤러 sendChatMessageToFriend 실행");
+//        JSONObject payload = new JSONObject()
+//                .put("type", "chatMessage")
+//                .put("payload", new JSONObject()
+//                        .put("senderEmail", message.getSenderEmail())
+//                        .put("content", message.getContent()));
+//
+//        // 수신자가 채팅방에 있는지 확인
+//        isFriendInRoom(message, receiverEmail, message.getRoomId());
+//        // 친구의 세션을 찾기
+//        WebSocketSession friendSession = webSocketService.findSessionByEmail(receiverEmail);
+//
+//        if (friendSession != null) {
+//            // 친구의 세션이 존재하면 메시지를 전송합니다.
+//            try {
+//                friendSession.sendMessage(new TextMessage(payload.toString()));
+//                logger.info("메시지 전송 완료 - 수신자: {}", receiverEmail);
+//            } catch (IOException e) {
+//                logger.error("메시지 전송 오류: {}", receiverEmail, e);
+//            }
+//        } else {
+//            logger.warn("수신자 {}는 오프라인입니다. 메시지는 이미 데이터베이스에 저장되어 있습니다.", receiverEmail);
+//        }
+//    }
+
+
+//    // 유저 채팅방 입장 여부로 실시간 읽음 처리
+//    private void isFriendInRoom(Message message, String receiverEmail, Long roomId) {
+//        boolean isReceiverInRoom = chatSessionManager.isUserInRoom(receiverEmail, roomId);
+//
+//        // 상대가 채팅방에 있는 경우
+//        if (isReceiverInRoom) {
+//            chatService.updateMessageReadStatus(message);
+//        } else {
+//            logger.warn("수신자가 채팅방에 있지 않습니다: {}", receiverEmail);
+//        }
+//    }
+
+
+
 
     private void enterRoom(JSONObject jsonObject, WebSocketSession session) throws JSONException {
         Long roomId = jsonObject.getLong("roomId");
@@ -174,7 +316,7 @@ public class CustomWebSocketController extends TextWebSocketHandler {
         //유저 채팅방 위치 유지 및 확인 (실시간 빌드업)
         chatSessionManager.setUserRoom(userEmail, roomId);
 
-        //입장시 안 읽은 메세지 읽음처리로직
+        //입장시 안 읽은 메세지 읽음처리로직 (DB)
         chatService.markMessagesAsRead(userEmail, roomId);
     }
 
@@ -189,14 +331,8 @@ public class CustomWebSocketController extends TextWebSocketHandler {
     }
 
 
-    private void isFriendInRoom(Message message, String receiverEmail, Long roomId) {
-        boolean isReceiverInRoom = chatSessionManager.isUserInRoom(receiverEmail, roomId);
-        // 상대가 채팅방에 있는경우
-        if (isReceiverInRoom) {
-            chatService.updateMessageReadStatus(message);
-            webSocketService.sendReadStatusUpdate(message);
-        }
-    }
+
+
 
 
 

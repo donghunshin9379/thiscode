@@ -4,11 +4,15 @@ import com.example.thiscode.domain.ChatRoom;
 import com.example.thiscode.domain.Message;
 import com.example.thiscode.repository.ChatRepository;
 import com.example.thiscode.repository.ChatRoomRepository;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -106,6 +110,8 @@ public class ChatService {
             webSocketService.sendReadStatusUpdate(message);
         }
     }
+
+
 
 
 

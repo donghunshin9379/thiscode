@@ -3,7 +3,10 @@ package com.example.thiscode.domain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.WebSocketSession;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,7 +27,7 @@ public class ChatSessionManager {
     }
 
     public boolean isUserInRoom(String userEmail, Long roomId) {
-        logger.info("isUserInRoom  userEmail : {}",userEmail);
+        logger.info("isUserInRoom  userEmail : {}", userEmail);
         logger.info("isUserInRoom  roomId : {}", roomId);
         Long currentRoomId = userRooms.get(userEmail);
         return currentRoomId != null && currentRoomId.equals(roomId);
@@ -33,5 +36,8 @@ public class ChatSessionManager {
     public Long getUserRoom(String userEmail) {
         return userRooms.get(userEmail);
     }
+
+
+
 }
 
