@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,7 +23,7 @@ public class WebSocketService {
     public WebSocketService(FriendListService friendListService) {
         this.friendListService = friendListService;
     }
-    
+
     // 이메일로 세션 조회
     public WebSocketSession findSessionByEmail(String email) {
         return userSessions.get(email); // 이메일로 세션을 직접 반환
@@ -82,8 +83,8 @@ public class WebSocketService {
         JSONObject payload = new JSONObject()
                 .put("type", "statusUpdate")
                 .put("payload", new JSONObject()
-                .put("email", email)
-                .put("status", isOnline ? "online" : "offline"));
+                        .put("email", email)
+                        .put("status", isOnline ? "online" : "offline"));
 
         Set<String> friends = friendListService.getAllFriendEmails(email);
         for (String friendEmail : friends) {
@@ -141,7 +142,6 @@ public class WebSocketService {
                     .put("payload", new JSONObject()
                             .put("messageId", message.getId())
                             .put("isRead", true));
-
             try {
                 senderSession.sendMessage(new TextMessage(payload.toString()));
                 logger.info("발신자에게 읽음 상태 업데이트: {}", payload.toString());

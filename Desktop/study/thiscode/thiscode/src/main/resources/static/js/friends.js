@@ -5,7 +5,12 @@ const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttrib
 
 // 친구추가 모달 함수
 function showAddFriendModal() {
-    document.getElementById('add-friend-modal').style.display = 'block';
+     var modal = document.getElementById('add-friend-modal');
+        if (modal.style.display === 'block') {
+            modal.style.display = 'none';
+        } else {
+            modal.style.display = 'block';
+        }
 }
 
 // 친구추가 모달 닫는 함수
@@ -296,15 +301,21 @@ function loadBlockedUsers() {
         .catch(error => console.error('Error:', error));
 }
 
-// 온라인 탭 (to 서버 CustomWebSocketController)
-function fetchOnlineFriends() {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "onlineFriends" }));
-    } else {
-        console.warn("WebSocket 연결이 아직 열리지 않았습니다. 연결을 기다립니다.");
-        setTimeout(fetchOnlineFriends, 100); // 100ms 후에 다시 시도
+    // 온라인 친구 목록 요청
+    function fetchOnlineFriends() {
+        // 채팅 UI가 활성화되어 있는지 확인
+        if (isChatUIActive) {
+            console.log("채팅 UI 활성화 상태입니다. 온라인 친구 목록을 요청하지 않습니다.");
+            return; // 채팅 UI가 활성화된 경우 온라인 친구 목록을 요청하지 않음
+        }
+
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "onlineFriends" }));
+        } else {
+            console.warn("WebSocket 연결이 아직 열리지 않았습니다. 연결을 기다립니다.");
+            setTimeout(fetchOnlineFriends, 100); // 100ms 후에 다시 시도
+        }
     }
-}
 // 활성화 탭 추적 변수
 let activeTabId = '';
 let currentUserEmail;
@@ -406,30 +417,4 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => console.error('Error:', error));
 });
-
-//// 채팅 읽음 로직
-//
-//// 채팅방 마지막메세지 추출 (roomId로 해당 채팅방 마지막 메세지 추출)
-//function getLastReadMessageId(roomId) {
-//    fetch(`/chat/last?roomId=${encodeURIComponent(roomId)}`, {
-//        method: 'GET', // GET 요청으로 변경
-//        headers: {
-//            'Content-Type': 'application/json',
-//        }
-//    })
-//    .then(response => {
-//        if (!response.ok) {
-//            throw new Error('Network response was not ok');
-//        }
-//        return response.json();
-//    })
-//    .then(lastReadMessageId => {
-//        console.log("LastReadMesageID : ", lastReadMessageId);
-//    })
-//    .catch(error => {
-//        console.error('getLastReadMessageId 요청 중 오류 발생:', error);
-//    });
-//}
-//
-//
 

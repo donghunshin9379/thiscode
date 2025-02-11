@@ -4,19 +4,13 @@ import com.example.thiscode.domain.ChatRoom;
 import com.example.thiscode.domain.Message;
 import com.example.thiscode.repository.ChatRepository;
 import com.example.thiscode.repository.ChatRoomRepository;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -45,22 +39,14 @@ public class ChatService {
 
         Message message = new Message();
         message.setRoomId(roomId);
-        message.setSenderEmail(senderEmail); // senderId 대신 senderEmail 사용
-        message.setReceiverEmail(receiverEmail); // 수신자 이메일 설정
+        message.setSenderEmail(senderEmail);
+        message.setReceiverEmail(receiverEmail);
         message.setContent(content);
         message.setCreatedAt(LocalDateTime.now());
         message.setIsRead(Boolean.FALSE);
 
         return chatRepository.save(message);
     }
-
-//    // 여러 메시지 저장 (전체 조회용)
-//    public void saveMessages(List<Message> messages) {
-//        List<Object[]> messageData = messages.stream()
-//                .map(m -> new Object[]{m.getRoomId(), m.getSenderEmail(), m.getReceiverEmail(), m.getContent(), m.getCreatedAt(), m.isRead()})
-//                .collect(Collectors.toList());
-//        chatRepository.batchInsert(messageData);
-//    }
 
     public Long getChatRoomId(String user1Email, String user2Email) {
         // 이메일을 정렬하여 항상 같은 순서로 조회
@@ -94,27 +80,14 @@ public class ChatService {
         return chatRepository.findDistinctFriendsWithContent(userEmail);
     }
 
-
     public void markMessagesAsRead(String userEmail, Long roomId) {
-        logger.info("markMessageAsRead 유저 이메일 {}" ,userEmail);
-        // 읽지 않은 메시지 목록을 가져옵니다.
+        // 읽지 않은 메시지 목록
         List<Message> unreadMessages = chatRepository.findUnreadMessages(userEmail, roomId);
-
-        logger.info("안읽은메세지: {}", unreadMessages);
         for (Message message : unreadMessages) {
-            // 각 메시지를 읽음 상태로 업데이트합니다.
             message.setIsRead(true);
             chatRepository.save(message);
-
-            // 읽음 상태 업데이트를 실시간으로 전송합니다.
             webSocketService.sendReadStatusUpdate(message);
         }
     }
-
-
-
-
-
-
 
 }

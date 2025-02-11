@@ -16,10 +16,8 @@ public class ChatSessionManager {
     private static final Map<String, Long> userRooms = new ConcurrentHashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(ChatSessionManager.class);
 
-
     public void removeUserRoom(String userEmail, Long roomId) {
         userRooms.remove(userEmail, roomId);
-        // 필요한 경우 추가적인 정리 작업 수행
     }
 
     public void setUserRoom(String userEmail, Long roomId) {
@@ -32,11 +30,6 @@ public class ChatSessionManager {
         Long currentRoomId = userRooms.get(userEmail);
         return currentRoomId != null && currentRoomId.equals(roomId);
     }
-
-    public Long getUserRoom(String userEmail) {
-        return userRooms.get(userEmail);
-    }
-
 
 
 }
