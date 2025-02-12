@@ -34,6 +34,9 @@
   1. 유저 로그인 시 상태 업데이트
   2. 서버 측 사용자의 온라인 상태인 친구 필터링
   3. 온라인 상태 친구세션으로 상태 전송
+     
+  ![Image](https://github.com/user-attachments/assets/0f4ead23-7acb-47e5-bcca-1ca1961d8f04)
+<br><br>
 
   **실시간 메시지 전송**
   1. 유저가 서버에 채팅 송신 요청
@@ -42,8 +45,10 @@
   4. 유저(발신자)에게 메시지 읽음상태 전송
   5. 친구 세션 유효성 검사
   6. 전송
+
+  ![Image](https://github.com/user-attachments/assets/db2c4b2f-ee60-4fdd-bcac-e3ce1e119eb4)
 <br><br>
-  ![Image](https://github.com/user-attachments/assets/d652f5c1-e12e-4309-886d-1345c91828f9)
+ 
 
 <br><br>
 
