@@ -52,4 +52,5 @@
   2. 친구유저 채팅방 입장 여부, 친구세션 존재여부 유효성 검사 
   3. 친구유저 온라인상태 O, 채팅방 입장 X (채팅방에 입장 후엔 알림 X)
   4. 알림 전송
+<br><br>
   ![Image](https://github.com/user-attachments/assets/72bcf7c4-dada-46b8-b88a-d7265128c062)
