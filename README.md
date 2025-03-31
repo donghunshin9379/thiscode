@@ -1,6 +1,7 @@
 # thiscode
 
 ## Discord를 *Java/Spring boot*로 구현합니다.
+## Docker Hub : https://hub.docker.com/repository/docker/dhun97/thiscode-app/tags
 
 - 프레임워크 : 스프링부트 '3.3.3'
 - 패키지 구조 : MVC
@@ -59,3 +60,5 @@
   4. 알림 전송
 <br><br>
   ![Image](https://github.com/user-attachments/assets/72bcf7c4-dada-46b8-b88a-d7265128c062)
+
+
